@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { supabase } from "./lib/supabase.js";
+import { supabase, isSupabaseConfigured } from "./lib/supabase.js";
 import {
   ArrowRight, Check, CheckCheck, ChevronDown, CircleHelp, Clipboard, Copy,
   Leaf, LoaderCircle, Plus, ShoppingBasket, Trash2, Users, Wifi, WifiOff, X
@@ -203,6 +203,15 @@ export default function App() {
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, []);
+
+  if (!isSupabaseConfigured) return (
+    <main className="loading-screen">
+      <div style={{ maxWidth: 520, padding: 24, textAlign: "center" }}>
+        <h1>Falta configurar o Supabase</h1>
+        <p>Cria um projeto Supabase, executa o SQL de <code>supabase/migrations</code> e define <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code> no ficheiro <code>.env.local</code>.</p>
+      </div>
+    </main>
+  );
 
   if (loading && !list) return <main className="loading-screen"><LoaderCircle className="spin" size={30}/><span>A preparar a tua lista…</span></main>;
 
