@@ -2,67 +2,43 @@
 
 Lista de compras familiar, mobile-first, com listas partilhadas, categorias, quantidades e sincronização em tempo real.
 
-## Funcionalidades do MVP
+## Funcionalidades
 
-- Criar uma lista e partilhá-la por link ou código de 6 caracteres.
+- Criar uma lista e partilhá-la por link ou código.
 - Entrar numa lista existente com o código.
-- Adicionar e remover artigos.
-- Definir quantidade e categoria manual ou automática.
+- Adicionar e remover artigos, definir quantidade e categoria.
 - Marcar artigos como comprados e limpar os concluídos.
-- Atualizações em tempo real via Socket.IO.
+- Atualizações em tempo real entre dispositivos através de Supabase Realtime Broadcast.
 - Interface responsiva em português europeu.
-- Persistência em MongoDB.
+- Persistência PostgreSQL gerida pelo Supabase; sem servidor Express, MongoDB ou Socket.IO.
 
-## Requisitos
+## Configurar o Supabase
 
-- Node.js 20+
-- MongoDB local ou MongoDB Atlas
-
-## Executar localmente
+1. Cria um projeto em [supabase.com](https://supabase.com/).
+2. Abre **SQL Editor**, cria uma query e executa todo o ficheiro `supabase/migrations/202610090001_initial_schema.sql`.
+3. Em **Project Settings → API**, copia o Project URL e a chave publishable (ou anon legacy).
+4. Copia `.env.example` para `.env.local` e preenche `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`.
+5. Instala dependências e arranca a aplicação:
 
 ```bash
 npm install
-cp .env.example .env
-# Edita .env e configura MONGODB_URI
+cp .env.example .env.local
+# Edita .env.local com os dados do teu projeto
 npm run dev
 ```
 
-Abre http://localhost:5173. A API corre em http://localhost:3001.
+Abre o endereço local indicado pelo Vite.
 
-## Produção
+## Deploy
 
-1. Define `MONGODB_URI`, `MONGODB_DB`, `PORT` e `CLIENT_ORIGIN` no serviço de alojamento.
-2. Executa `npm install && npm run build`.
-3. Executa `npm start` para servir a API e os ficheiros compilados.
-4. Configura HTTPS no serviço de alojamento.
+A aplicação é uma SPA estática. Define `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` nas variáveis de ambiente do serviço de build e executa `npm install && npm run build`; publica a pasta `dist`. O URL e a chave publicável são dados de cliente e podem estar no bundle. **Nunca coloques uma chave `service_role` no frontend.**
 
-O `CLIENT_ORIGIN` deve corresponder à origem pública da aplicação. O alojamento tem de suportar WebSockets.
+## Segurança
 
-## Segurança e limites do MVP
-
-O código de partilha funciona como uma chave de acesso: qualquer pessoa que o tenha pode ver e alterar a lista. Partilha-o apenas com pessoas de confiança. Antes de um lançamento público, acrescenta autenticação, rate limiting, proteção contra abuso e opções para revogar convites.
-
-Nunca coloques credenciais MongoDB no frontend. Mantém `MONGODB_URI` apenas como variável de ambiente no servidor.
+As tabelas não têm acesso direto concedido ao papel `anon`; a app usa funções PostgreSQL `SECURITY DEFINER` com `search_path` fixo e validação do código de partilha. O código de convite dá acesso de leitura e escrita à lista, pelo que deve ser partilhado apenas com pessoas de confiança. O código gerado tem 12 caracteres hexadecimais. Antes de promover a aplicação para uso público, acrescenta proteção contra abuso/rate limiting e considera autenticação e convites revogáveis.
 
 ## Estrutura
 
-```text
-lista-familia/
-├── server/index.js
-├── src/App.jsx
-├── src/main.jsx
-├── src/styles.css
-├── index.html
-├── package.json
-├── vite.config.js
-└── .env.example
-```
-
-## Próximas melhorias
-
-- Listas recorrentes e sugestões de artigos habituais.
-- Quantidades editáveis diretamente na lista.
-- Membros e permissões.
-- PWA instalável e notificações push.
-- Testes automatizados e pipeline CI.
-- Plano premium depois de validar utilização e disposição para pagar.
+- `src/App.jsx`: interface e chamadas RPC.
+- `src/lib/supabase.js`: cliente Supabase.
+- `supabase/migrations/`: schema, funções RPC e permissões.
