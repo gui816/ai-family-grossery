@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { io } from "socket.io-client";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { supabase } from "./lib/supabase.js";
 import {
   ArrowRight, Check, CheckCheck, ChevronDown, CircleHelp, Clipboard, Copy,
   Leaf, LoaderCircle, Plus, ShoppingBasket, Trash2, Users, Wifi, WifiOff, X
@@ -23,18 +23,9 @@ function guessCategory(name) {
   return "outros";
 }
 
-async function api(path, options = {}) {
-  const response = await fetch(`/api${path}`, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    ...options
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || "Não foi possível concluir a operação.");
-  return data;
-}
-
 export default function App() {
-  const [listCode, setListCode] = useState(() => localStorage.getItem("lista-familia-code") || "");
+  const [listCode, setListCode] = useState(() => new URLSearchParams(window.location.search).get("list")?.toUpperCase() || localStorage.getItem("lista-familia-code") || "");
+  const channelRef = useRef(null);
   const [list, setList] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -61,9 +52,10 @@ export default function App() {
     if (!listCode) return;
     let alive = true;
     setLoading(true);
-    api(`/lists/${encodeURIComponent(listCode)}`)
-      .then(data => {
+    supabase.rpc("get_family_list", { p_share_code: listCode })
+      .then(({ data, error: rpcError }) => {
         if (!alive) return;
+        if (rpcError || !data?.list) throw rpcError || new Error("Lista não encontrada.");
         setList(data.list);
         setItems(data.items || []);
         setError("");
@@ -74,6 +66,7 @@ export default function App() {
         setListCode("");
         setList(null);
         setItems([]);
+        setError("Não encontrámos essa lista. Confirma o código e tenta novamente.");
       })
       .finally(() => alive && setLoading(false));
     return () => { alive = false; };
@@ -81,14 +74,31 @@ export default function App() {
 
   useEffect(() => {
     if (!listCode || !list) return;
-    const socket = io({ transports: ["websocket", "polling"] });
-    socket.on("connect", () => { setConnected(true); socket.emit("join-list", listCode); });
-    socket.on("disconnect", () => setConnected(false));
-    socket.on("list-updated", payload => {
-      if (payload?.listCode === listCode && Array.isArray(payload.items)) setItems(payload.items);
+    let alive = true;
+    const channel = supabase.channel(`list:${listCode}`, {
+      config: { broadcast: { self: false } }
     });
-    return () => { socket.disconnect(); setConnected(false); };
+    channel
+      .on("broadcast", { event: "changed" }, async () => {
+        const { data, error: rpcError } = await supabase.rpc("get_family_list", { p_share_code: listCode });
+        if (alive && !rpcError && data?.list) {
+          setList(data.list);
+          setItems(data.items || []);
+        }
+      })
+      .subscribe(status => setConnected(alive && status === "SUBSCRIBED"));
+    channelRef.current = channel;
+    return () => {
+      alive = false;
+      channelRef.current = null;
+      setConnected(false);
+      supabase.removeChannel(channel);
+    };
   }, [listCode, !!list]);
+
+  function broadcastChange() {
+    channelRef.current?.send({ type: "broadcast", event: "changed", payload: {} });
+  }
 
   function notify(message) {
     setToast(message);
@@ -99,7 +109,8 @@ export default function App() {
     e?.preventDefault();
     setLoading(true); setError("");
     try {
-      const data = await api("/lists", { method: "POST", body: JSON.stringify({ name: listName.trim() || "Compras da família" }) });
+      const { data, error: rpcError } = await supabase.rpc("create_family_list", { p_name: listName.trim() || "Compras da família" });
+      if (rpcError) throw rpcError;
       localStorage.setItem("lista-familia-code", data.list.shareCode);
       setListCode(data.list.shareCode);
       setList(data.list);
@@ -114,7 +125,8 @@ export default function App() {
     if (!code) return;
     setLoading(true); setError("");
     try {
-      const data = await api(`/lists/${encodeURIComponent(code)}`);
+      const { data, error: rpcError } = await supabase.rpc("get_family_list", { p_share_code: code });
+      if (rpcError || !data?.list) throw rpcError || new Error("Lista não encontrada.");
       localStorage.setItem("lista-familia-code", code);
       setListCode(code); setList(data.list); setItems(data.items || []);
     } catch { setError("Não encontrámos essa lista. Confirma o código e tenta novamente."); }
@@ -127,10 +139,12 @@ export default function App() {
     if (!cleanName || !listCode) return;
     const qty = Math.max(1, Math.min(999, Number.parseInt(quantity, 10) || 1));
     try {
-      const data = await api(`/lists/${encodeURIComponent(listCode)}/items`, {
-        method: "POST",
-        body: JSON.stringify({ name: cleanName, quantity: qty, category: category === "auto" ? guessCategory(cleanName) : category })
+      const { data, error: rpcError } = await supabase.rpc("add_family_item", {
+        p_share_code: listCode, p_name: cleanName, p_quantity: qty,
+        p_category: category === "auto" ? guessCategory(cleanName) : category
       });
+      if (rpcError) throw rpcError;
+      broadcastChange();
       setItems(data.items);
       setName(""); setQuantity("1"); setCategory("auto");
     } catch (err) { setError(err.message); }
@@ -138,16 +152,22 @@ export default function App() {
 
   async function updateItem(item, changes) {
     try {
-      const data = await api(`/lists/${encodeURIComponent(listCode)}/items/${item._id}`, {
-        method: "PATCH", body: JSON.stringify(changes)
+      const { data, error: rpcError } = await supabase.rpc("update_family_item", {
+        p_share_code: listCode, p_item_id: item._id,
+        p_done: changes.done ?? null, p_name: changes.name ?? null,
+        p_quantity: changes.quantity ?? null, p_category: changes.category ?? null
       });
+      if (rpcError) throw rpcError;
+      broadcastChange();
       setItems(data.items);
     } catch (err) { setError(err.message); }
   }
 
   async function deleteItem(item) {
     try {
-      const data = await api(`/lists/${encodeURIComponent(listCode)}/items/${item._id}`, { method: "DELETE" });
+      const { data, error: rpcError } = await supabase.rpc("delete_family_item", { p_share_code: listCode, p_item_id: item._id });
+      if (rpcError) throw rpcError;
+      broadcastChange();
       setItems(data.items);
     } catch (err) { setError(err.message); }
   }
@@ -155,7 +175,9 @@ export default function App() {
   async function clearDone() {
     if (!window.confirm("Queres remover todos os artigos já comprados?")) return;
     try {
-      const data = await api(`/lists/${encodeURIComponent(listCode)}/completed`, { method: "DELETE" });
+      const { data, error: rpcError } = await supabase.rpc("clear_completed_items", { p_share_code: listCode });
+      if (rpcError) throw rpcError;
+      broadcastChange();
       setItems(data.items);
       notify("Compras concluídas removidas");
     } catch (err) { setError(err.message); }
@@ -173,10 +195,11 @@ export default function App() {
 
   useEffect(() => {
     const codeFromUrl = new URLSearchParams(window.location.search).get("list");
-    if (codeFromUrl && !listCode) {
-      setJoinCode(codeFromUrl.toUpperCase());
-      setListCode(codeFromUrl.toUpperCase());
-      localStorage.setItem("lista-familia-code", codeFromUrl.toUpperCase());
+    if (codeFromUrl) {
+      const code = codeFromUrl.toUpperCase();
+      setJoinCode(code);
+      setListCode(code);
+      localStorage.setItem("lista-familia-code", code);
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, []);
