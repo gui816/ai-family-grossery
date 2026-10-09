@@ -49,7 +49,7 @@ export default function App() {
   }, [items, activeItems, filter, showDone]);
 
   useEffect(() => {
-    if (!listCode) return;
+    if (!listCode || !isSupabaseConfigured) return;
     let alive = true;
     setLoading(true);
     supabase.rpc("get_family_list", { p_share_code: listCode })
@@ -73,7 +73,7 @@ export default function App() {
   }, [listCode]);
 
   useEffect(() => {
-    if (!listCode || !list) return;
+    if (!listCode || !list || !isSupabaseConfigured) return;
     let alive = true;
     const channel = supabase.channel(`list:${listCode}`, {
       config: { broadcast: { self: false } }
