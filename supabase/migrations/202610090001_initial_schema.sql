@@ -1,8 +1,6 @@
 -- Lista Família initial schema and secure RPC API.
 -- Run this entire file in the Supabase SQL Editor.
 
-create extension if not exists pgcrypto with schema extensions;
-
 create table if not exists public.family_lists (
   id uuid primary key default gen_random_uuid(),
   name text not null check (char_length(name) between 1 and 60),
@@ -66,7 +64,7 @@ declare
 begin
   if v_name = '' then v_name := 'Compras da família'; end if;
   loop
-    v_code := upper(substr(encode(extensions.gen_random_bytes(8), 'hex'), 1, 12));
+    v_code := upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12));
     exit when not exists (select 1 from public.family_lists where share_code = v_code);
   end loop;
   insert into public.family_lists(name, share_code)
