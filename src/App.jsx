@@ -184,12 +184,36 @@ export default function App() {
   }
 
   async function copyShareLink() {
-    const url = `${window.location.origin}/?list=${encodeURIComponent(listCode)}`;
+    // The Capacitor debug APK runs at https://localhost. Never share that
+    // internal WebView URL because it cannot be opened on another device.
+    const configuredBase = import.meta.env.VITE_PUBLIC_APP_URL?.trim();
+    const hostname = window.location.hostname;
+    const isLocalOrigin = hostname === "localhost" || hostname === "127.0.0.1";
+    const isCapacitorOrigin = window.location.protocol === "capacitor:" ||
+      (isLocalOrigin && window.location.protocol === "https:");
+    const baseUrl = configuredBase || (!isLocalOrigin && !isCapacitorOrigin ? window.location.origin : "");
+    const value = baseUrl
+      ? baseUrl.replace(/\/$/, "") + "/?list=" + encodeURIComponent(listCode)
+      : listCode;
+
     try {
-      await navigator.clipboard.writeText(url);
-      notify("Link copiado! Envia à tua família.");
+      await navigator.clipboard.writeText(value);
+      notify(baseUrl
+        ? "Link de convite copiado!"
+        : "Código copiado. O link público ainda não está configurado.");
     } catch {
-      window.prompt("Copia este link e partilha com a família:", url);
+      window.prompt(baseUrl
+        ? "Copia este link e partilha com a família:"
+        : "Copia este código e partilha com a família:", value);
+    }
+  }
+
+  async function copyListCode() {
+    try {
+      await navigator.clipboard.writeText(listCode);
+      notify("Código da lista copiado!");
+    } catch {
+      window.prompt("Copia este código e partilha com a família:", listCode);
     }
   }
 
@@ -277,7 +301,7 @@ export default function App() {
         {doneItems.length > 0 && !showDone && <button className="clear-done" onClick={clearDone}><CheckCheck size={16}/> Limpar artigos comprados</button>}
       </section>
       <footer className="app-footer"><span><Leaf size={15}/> Menos esquecimentos, mais tempo juntos.</span><button onClick={() => { if (window.confirm("Sair desta lista neste dispositivo? A lista partilhada não será apagada.")) { localStorage.removeItem("lista-familia-code"); setListCode(""); setList(null); setItems([]); } }}>Sair da lista</button></footer>
-      {showShare && <div className="modal-backdrop" onClick={() => setShowShare(false)}><section className="share-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="share-title"><button className="modal-close" onClick={() => setShowShare(false)} aria-label="Fechar"><X size={20}/></button><div className="share-graphic"><Users size={28}/></div><h2 id="share-title">A lista é melhor em família</h2><p>Partilha o link ou o código com quem faz as compras contigo. Todos veem as alterações em tempo real.</p><div className="share-code-box"><span>CÓDIGO DA LISTA</span><strong>{list.shareCode}</strong></div><button className="primary-button" onClick={copyShareLink}><Copy size={17}/> Copiar link de convite</button><button className="secondary-button" onClick={() => { navigator.clipboard?.writeText(list.shareCode); notify("Código copiado!"); }}><Clipboard size={17}/> Copiar apenas o código</button><p className="share-note"><CircleHelp size={14}/> Qualquer pessoa com o link ou código pode aceder à lista. Partilha apenas com pessoas de confiança.</p></section></div>}
+      {showShare && <div className="modal-backdrop" onClick={() => setShowShare(false)}><section className="share-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="share-title"><button className="modal-close" onClick={() => setShowShare(false)} aria-label="Fechar"><X size={20}/></button><div className="share-graphic"><Users size={28}/></div><h2 id="share-title">A lista é melhor em família</h2><p>Partilha o link ou o código com quem faz as compras contigo. Todos veem as alterações em tempo real.</p><div className="share-code-box"><span>CÓDIGO DA LISTA</span><strong>{list.shareCode}</strong></div><button className="primary-button" onClick={copyShareLink}><Copy size={17}/> Copiar link de convite</button><button className="secondary-button" onClick={copyListCode}><Clipboard size={17}/> Copiar apenas o código</button><p className="share-note"><CircleHelp size={14}/> Qualquer pessoa com o link ou código pode aceder à lista. Partilha apenas com pessoas de confiança.</p></section></div>}
       {toast && <div className="toast"><Check size={16}/>{toast}</div>}
       {error && <button className="error-toast" onClick={() => setError("")}>{error}<X size={15}/></button>}
     </main>
