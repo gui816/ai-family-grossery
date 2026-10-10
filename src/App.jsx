@@ -306,7 +306,7 @@ export default function App() {
       </section>
       <section className="add-panel">
         <form onSubmit={addItem}>
-          <div className="add-main"><span className="input-plus"><Plus size={22}/></span><input value={name} onChange={e => setName(e.target.value)} placeholder=t("O que está a faltar em casa?") aria-label={t("Nome do artigo")} maxLength={100}/><button type="submit" aria-label={t("Adicionar artigo")} disabled={!name.trim()}><Plus size={22}/></button></div>
+          <div className="add-main"><span className="input-plus"><Plus size={22}/></span><input value={name} onChange={e => setName(e.target.value)} placeholder={t("O que está a faltar em casa?")} aria-label={t("Nome do artigo")} maxLength={100}/><button type="submit" aria-label={t("Adicionar artigo")} disabled={!name.trim()}><Plus size={22}/></button></div>
           <div className="add-options"><div className="quantity-control"><label htmlFor="quantity">Qtd.</label><input id="quantity" type="number" min="1" max="999" value={quantity} onChange={e => setQuantity(e.target.value)}/></div><span className="option-separator"/><label className="category-select-label" htmlFor="category-select">Categoria</label><select id="category-select" value={category} onChange={e => setCategory(e.target.value)}><option value="auto">Automática</option>{CATEGORIES.filter(c => c.id !== "all").map(c => <option key={c.id} value={c.id}>{c.emoji} {t(c.label)}</option>)}</select></div>
         </form>
       </section>
