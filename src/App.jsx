@@ -255,17 +255,6 @@ export default function App() {
     }
   }
 
-  useEffect(() => {
-    const codeFromUrl = new URLSearchParams(window.location.search).get("list");
-    if (codeFromUrl) {
-      const code = codeFromUrl.toUpperCase();
-      setJoinCode(code);
-      setListCode(code);
-      localStorage.setItem("lista-familia-code", code);
-      window.history.replaceState({}, "", window.location.pathname);
-    }
-  }, []);
-
   if (!isSupabaseConfigured) return (
     <main className="loading-screen">
       <div style={{ maxWidth: 520, padding: 24, textAlign: "center" }}>
