@@ -4,8 +4,8 @@ Lista de compras familiar, mobile-first, com listas partilhadas, categorias, qua
 
 ## Funcionalidades
 
-- Criar uma lista e partilhá-la por link ou código.
-- Entrar numa lista existente com o código.
+- Criar uma lista e partilhá-la apenas através de um código.
+- Entrar numa lista existente com o código, sem precisar de uma página web ou link de convite.
 - Adicionar e remover artigos, definir quantidade e categoria.
 - Marcar artigos como comprados e limpar os concluídos.
 - Atualizações em tempo real entre dispositivos através de Supabase Realtime Broadcast.
@@ -31,7 +31,7 @@ Abre o endereço local indicado pelo Vite.
 
 ## Deploy
 
-A aplicação é uma SPA estática. Define `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` nas variáveis de ambiente do serviço de build e executa `npm install && npm run build`; publica a pasta `dist`. O URL e a chave publicável são dados de cliente e podem estar no bundle. **Nunca coloques uma chave `service_role` no frontend.**
+A aplicação pode ser distribuída como app Android através do APK gerado no GitHub Actions. Não é necessário publicar uma página web para criar listas ou partilhá-las: os familiares introduzem na app o código da lista. O build web continua disponível para desenvolvimento e testes, mas não é um requisito para a partilha. O URL Supabase e a chave publicável são dados de cliente e podem estar no bundle. **Nunca coloques uma chave `service_role` no frontend.**
 
 ## Segurança
 
