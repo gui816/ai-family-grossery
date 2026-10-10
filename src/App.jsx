@@ -284,7 +284,7 @@ export default function App() {
           <div className="form-divider"><span>ou</span></div>
           <form onSubmit={joinList} className="join-form">
             <label htmlFor="join-code">Já tens um código de partilha?</label>
-            <div className="join-row"><input id="join-code" value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase())} placeholder="Ex.: A3K9PX" maxLength={12}/><button aria-label=t("Entrar na lista") type="submit" className="join-button"><ArrowRight size={20}/></button></div>
+            <div className="join-row"><input id="join-code" value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase())} placeholder="Ex.: A3K9PX" maxLength={12}/><button aria-label={t("Entrar na lista")} type="submit" className="join-button"><ArrowRight size={20}/></button></div>
           </form>
           {error && <p className="error-message">{error}</p>}
         </div>
@@ -306,11 +306,11 @@ export default function App() {
       </section>
       <section className="add-panel">
         <form onSubmit={addItem}>
-          <div className="add-main"><span className="input-plus"><Plus size={22}/></span><input value={name} onChange={e => setName(e.target.value)} placeholder=t("O que está a faltar em casa?") aria-label=t("Nome do artigo") maxLength={100}/><button type="submit" aria-label=t("Adicionar artigo") disabled={!name.trim()}><Plus size={22}/></button></div>
+          <div className="add-main"><span className="input-plus"><Plus size={22}/></span><input value={name} onChange={e => setName(e.target.value)} placeholder=t("O que está a faltar em casa?") aria-label={t("Nome do artigo")} maxLength={100}/><button type="submit" aria-label={t("Adicionar artigo")} disabled={!name.trim()}><Plus size={22}/></button></div>
           <div className="add-options"><div className="quantity-control"><label htmlFor="quantity">Qtd.</label><input id="quantity" type="number" min="1" max="999" value={quantity} onChange={e => setQuantity(e.target.value)}/></div><span className="option-separator"/><label className="category-select-label" htmlFor="category-select">Categoria</label><select id="category-select" value={category} onChange={e => setCategory(e.target.value)}><option value="auto">Automática</option>{CATEGORIES.filter(c => c.id !== "all").map(c => <option key={c.id} value={c.id}>{c.emoji} {t(c.label)}</option>)}</select></div>
         </form>
       </section>
-      <nav className="category-tabs" aria-label=t("Filtrar por categoria")>
+      <nav className="category-tabs" aria-label={t("Filtrar por categoria")}>
         {CATEGORIES.map(c => <button key={c.id} className={filter === c.id ? "category-tab active" : "category-tab"} onClick={() => setFilter(c.id)}><span>{c.emoji}</span>{t(c.label)}{c.id === "all" && <span className="tab-count">{activeItems.length}</span>}</button>)}
       </nav>
       <section className="items-section">
