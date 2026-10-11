@@ -90,9 +90,10 @@ export default function App() {
   const activeItems = useMemo(() => items.filter(i => !i.done), [items]);
   const doneItems = useMemo(() => items.filter(i => i.done), [items]);
   const visibleItems = useMemo(() => {
-    const source = showDone ? items : activeItems;
+    const source = shoppingMode || !showDone ? activeItems : items;
     return source.filter(i => filter === "all" || i.category === filter);
-  }, [items, activeItems, filter, showDone]);
+  }, [items, activeItems, filter, showDone, shoppingMode]);
+  const suggestions = useMemo(() => [...new Map([...items.map(item => item.name), ...itemHistory].map(value => [value.toLocaleLowerCase(), value])).values()].slice(0, 30), [items, itemHistory]);
 
   useEffect(() => {
     if (!listCode || !isSupabaseConfigured) return;
@@ -189,6 +190,11 @@ export default function App() {
       if (rpcError) throw rpcError;
       broadcastChange();
       setItems(data.items);
+      setItemHistory(previous => {
+        const next = [cleanName, ...previous.filter(value => value.toLocaleLowerCase() !== cleanName.toLocaleLowerCase())].slice(0, 80);
+        localStorage.setItem("lista-familia-item-history", JSON.stringify(next));
+        return next;
+      });
       setName(""); setQuantity("1"); setCategory("auto");
       return true;
     } catch (err) { setError(err.message); return false; }
