@@ -187,7 +187,8 @@ export default function App() {
       broadcastChange();
       setItems(data.items);
       setName(""); setQuantity("1"); setCategory("auto");
-    } catch (err) { setError(err.message); }
+      return true;
+    } catch (err) { setError(err.message); return false; }
   }
 
   async function addItem(e) {
@@ -199,8 +200,7 @@ export default function App() {
   }
 
   async function repeatItem(itemName) {
-    await submitItem(itemName, 1, "auto");
-    notify(t("Artigo adicionado novamente"));
+    if (await submitItem(itemName, 1, "auto")) notify(t("Artigo adicionado novamente"));
   }
 
   async function updateItem(item, changes) {
