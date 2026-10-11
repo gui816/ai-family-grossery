@@ -337,6 +337,10 @@ export default function App() {
           <div className="add-options"><div className="quantity-control"><label htmlFor="quantity">Qtd.</label><input id="quantity" type="number" min="1" max="999" value={quantity} onChange={e => setQuantity(e.target.value)}/></div><span className="option-separator"/><label className="category-select-label" htmlFor="category-select">Categoria</label><select id="category-select" value={category} onChange={e => setCategory(e.target.value)}><option value="auto">Automática</option>{CATEGORIES.filter(c => c.id !== "all").map(c => <option key={c.id} value={c.id}>{c.emoji} {t(c.label)}</option>)}</select></div>
         </form>
       </section>
+      <section className="templates-section">
+        <div className="templates-title-row"><span>{t("Listas reutilizáveis")}</span><button type="button" onClick={saveCurrentTemplate} disabled={!activeItems.length}>{t("Guardar lista atual")}</button></div>
+        {templates.length > 0 ? <div className="template-chips">{templates.map(template => <button type="button" className="template-chip" key={template.id} onClick={() => useTemplate(template)}><span>{template.name}</span><small>{template.items.length} {t("artigos")}</small></button>)}</div> : <p className="template-hint">{t("Guarda uma compra habitual para a reutilizares noutra semana.")}</p>}
+      </section>
       {doneItems.length > 0 && <section className="repeat-section" aria-label={t("Repetir compras")}>
         <div className="repeat-heading">{t("Repetir compras")}</div>
         <div className="repeat-chips">{[...new Map(doneItems.map(item => [item.name.toLocaleLowerCase(), item.name])).values()].slice(0, 5).map(itemName => <button type="button" className="repeat-chip" key={itemName} onClick={() => repeatItem(itemName)}><Plus size={13}/>{itemName}</button>)}</div>
