@@ -212,6 +212,17 @@ export default function App() {
     if (await submitItem(itemName, 1, "auto")) notify(t("Artigo adicionado novamente"));
   }
 
+  function saveCurrentTemplate() {
+    const pending = activeItems.map(item => ({ name: item.name, quantity: item.quantity, category: item.category }));
+    if (!pending.length) return;
+    const templateName = window.prompt(t("Nome para esta lista reutilizável:"), list.name || t("Compra semanal"));
+    if (!templateName || !templateName.trim()) return;
+    const next = [{ id: Date.now(), name: templateName.trim().slice(0, 50), items: pending }, ...templates].slice(0, 8);
+    setTemplates(next);
+    localStorage.setItem("lista-familia-templates", JSON.stringify(next));
+    notify(t("Lista guardada neste dispositivo"));
+  }
+
   async function useTemplate(template) {
     for (const item of template.items) {
       const ok = await submitItem(item.name, item.quantity || 1, item.category || "auto");
