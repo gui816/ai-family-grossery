@@ -78,6 +78,9 @@ export default function App() {
   const [category, setCategory] = useState("auto");
   const [filter, setFilter] = useState("all");
   const [showDone, setShowDone] = useState(false);
+  const [shoppingMode, setShoppingMode] = useState(false);
+  const [templates, setTemplates] = useState(() => { try { return JSON.parse(localStorage.getItem("lista-familia-templates") || "[]"); } catch { return []; } });
+  const [itemHistory, setItemHistory] = useState(() => { try { return JSON.parse(localStorage.getItem("lista-familia-item-history") || "[]"); } catch { return []; } });
   const [joinCode, setJoinCode] = useState("");
   const [listName, setListName] = useState(t("Compras da família"));
   const [error, setError] = useState("");
