@@ -345,11 +345,15 @@ export default function App() {
         <div className="repeat-heading">{t("Repetir compras")}</div>
         <div className="repeat-chips">{[...new Map(doneItems.map(item => [item.name.toLocaleLowerCase(), item.name])).values()].slice(0, 5).map(itemName => <button type="button" className="repeat-chip" key={itemName} onClick={() => repeatItem(itemName)}><Plus size={13}/>{itemName}</button>)}</div>
       </section>}
+      <div className="shopping-mode-row">
+        <span><ShoppingBasket size={16}/>{t("Modo supermercado")}</span>
+        <button type="button" className={shoppingMode ? "mode-toggle active" : "mode-toggle"} aria-pressed={shoppingMode} onClick={() => { setShoppingMode(!shoppingMode); if (!shoppingMode) setShowDone(false); }}>{shoppingMode ? t("Ativo") : t("Ativar")}</button>
+      </div>
       <nav className="category-tabs" aria-label={t("Filtrar por categoria")}>
         {CATEGORIES.map(c => <button key={c.id} className={filter === c.id ? "category-tab active" : "category-tab"} onClick={() => setFilter(c.id)}><span>{c.emoji}</span>{t(c.label)}{c.id === "all" && <span className="tab-count">{activeItems.length}</span>}</button>)}
       </nav>
       <section className="items-section">
-        <div className="section-heading"><div><h2>{showDone ? t("Já comprados") : t("Falta comprar")}</h2><span>{visibleItems.length} {visibleItems.length === 1 ? t("artigo") : t("artigos")}</span></div><button className="view-toggle" onClick={() => setShowDone(!showDone)}>{showDone ? t("Ver por comprar") : `Ver comprados (${doneItems.length})`} <ChevronDown size={15} className={showDone ? "rotate" : ""}/></button></div>
+        <div className="section-heading"><div><h2>{shoppingMode ? t("A tua compra") : showDone ? t("Já comprados") : t("Falta comprar")}</h2><span>{visibleItems.length} {visibleItems.length === 1 ? t("artigo") : t("artigos")}</span></div>{!shoppingMode && <button className="view-toggle" onClick={() => setShowDone(!showDone)}>{showDone ? t("Ver por comprar") : `Ver comprados (${doneItems.length})`} <ChevronDown size={15} className={showDone ? "rotate" : ""}/></button>}</div>
         {visibleItems.length === 0 ? <div className="empty-state"><span className="empty-illustration">{showDone ? "✨" : "🧺"}</span><h3>{showDone ? t("Ainda não há compras concluídas") : filter === "all" ? t("A lista está vazia") : t("Nada nesta categoria")}</h3><p>{showDone ? t("Quando marcares um artigo como comprado, aparece aqui.") : t("Adiciona o primeiro artigo no campo acima.")}</p></div> : (
           <div className="items-list">{visibleItems.map(item => {
             const cat = CATEGORIES.find(c => c.id === item.category) || CATEGORIES[5];
