@@ -58,3 +58,5 @@
 .quantity-control input{min-height:36px}
 .mode-toggle{min-height:40px;min-width:76px}
 @media(max-width:400px){.category-tab{padding-left:11px;padding-right:11px}.templates-title-row button{min-height:40px}.shopping-mode-row{margin-top:8px}}
+
+.check-button,.check-button.checked{background:transparent!important;border-color:transparent!important}
