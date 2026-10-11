@@ -212,6 +212,14 @@ export default function App() {
     if (await submitItem(itemName, 1, "auto")) notify(t("Artigo adicionado novamente"));
   }
 
+  async function useTemplate(template) {
+    for (const item of template.items) {
+      const ok = await submitItem(item.name, item.quantity || 1, item.category || "auto");
+      if (!ok) return;
+    }
+    notify(t("Lista reutilizada"));
+  }
+
   async function updateItem(item, changes) {
     try {
       const { data, error: rpcError } = await supabase.rpc("update_family_item", {
