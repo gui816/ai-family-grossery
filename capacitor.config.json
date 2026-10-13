@@ -1,6 +1,6 @@
 {
   "appId": "com.gui816.listafamilia",
-  "appName": "FamList",
+  "appName": "Listora",
   "webDir": "dist",
   "bundledWebRuntime": false,
   "server": {
