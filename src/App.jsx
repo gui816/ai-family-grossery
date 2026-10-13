@@ -309,7 +309,7 @@ export default function App() {
   if (!listCode || !list) return (
     <main className="welcome-page">
       <div className="welcome-glow glow-one" /><div className="welcome-glow glow-two" />
-      <header className="welcome-top"><div className="brand"><span className="brand-mark"><ShoppingBasket size={23}/></span><span>lista<span className="brand-light">família</span></span></div><LanguagePicker language={language} onChange={setLanguage}/></header>
+      <header className="welcome-top"><div className="brand"><span className="brand-mark"><ShoppingBasket size={23}/></span><span>Fam<span className="brand-light">List</span></span></div><LanguagePicker language={language} onChange={setLanguage}/></header>
       <section className="welcome-content">
         <div className="eyebrow"><Leaf size={15}/> {t("MAIS SIMPLES, JUNTOS")}</div>
         <h1>{t("As compras da família.")}<br/><span>{t("Sem esquecimentos.")}</span></h1>
