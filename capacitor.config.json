@@ -1,6 +1,6 @@
 {
   "appId": "com.gui816.listafamilia",
-  "appName": "Lista Família",
+  "appName": "FamList",
   "webDir": "dist",
   "bundledWebRuntime": false,
   "server": {
