@@ -66,12 +66,12 @@ export default function App() {
     return LANGUAGE_OPTIONS.find(([code]) => browserLanguage.startsWith(code.toLowerCase().split("-")[0]))?.[0] || "pt-PT";
   });
   const t = text => tx(text, language);
-  const displayListName = list && ["Compras da família", "Family shopping", "Compra familiar"].includes(list.name) ? t("Compras da família") : list?.name;
   useEffect(() => { localStorage.setItem("lista-familia-language", language); }, [language]);
 
   const [listCode, setListCode] = useState(() => new URLSearchParams(window.location.search).get("list")?.toUpperCase() || localStorage.getItem("lista-familia-code") || "");
   const channelRef = useRef(null);
   const [list, setList] = useState(null);
+  const displayListName = list && ["Compras da família", "Family shopping", "Compra familiar"].includes(list.name) ? t("Compras da família") : list?.name;
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [connected, setConnected] = useState(false);
@@ -337,7 +337,7 @@ export default function App() {
   return (
     <main className="app-shell">
       <header className="topbar">
-        <div className="brand"><span className="brand-mark"><ShoppingBasket size={21}/></span><span>lista<span className="brand-light">família</span></span></div>
+        <div className="brand"><span className="brand-mark"><ShoppingBasket size={21}/></span><span>List<span className="brand-light">ora</span></span></div>
         <button className="share-button" onClick={() => setShowShare(true)}><Users size={17}/><span>{t("Partilhar")}</span></button>
       </header>
       <section className="list-header">
