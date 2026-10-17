@@ -336,9 +336,15 @@ export default function App() {
 
   return (
     <main className="app-shell">
-      <header className="topbar">
-        <div className="brand"><span className="brand-mark"><ShoppingBasket size={21}/></span><span>List<span className="brand-light">ora</span></span></div>
-        <button className="share-button" onClick={() => setShowShare(true)}><Users size={17}/><span>{t("Partilhar")}</span></button>
+      <header className="topbar refined-topbar">
+        <div className="refined-brand">
+          <span className="brand-mark"><ShoppingBasket size={24}/></span>
+          <div className="refined-brand-copy"><span className="brand-name">Listora</span><span className="list-name-inline">{displayListName}<ChevronDown size={15}/></span></div>
+        </div>
+        <div className="topbar-actions">
+          <button className="icon-action" onClick={() => setShowShare(true)} aria-label={t("Partilhar")} title={t("Partilhar")}><Users size={22}/></button>
+          <button className="icon-action" onClick={() => { if (doneItems.length) repeatItem(doneItems[0].name); else document.querySelector(".add-main input")?.focus(); }} aria-label={t("Repetir compras")} title={t("Repetir compras")}><ArrowRight size={22}/></button>
+        </div>
       </header>
       <section className="list-header">
         <div className="list-title-line"><div><div className="eyebrow">{t("A LISTA DA CASA")}</div><h1>{displayListName}</h1></div><span className={`sync-status ${connected ? "online" : ""}`} title={connected ? t("Sincronização ativa") : t("A ligar")}>{connected ? <Wifi size={15}/> : <WifiOff size={15}/>}<span>{connected ? t("Sincronizada") : t("A ligar…")}</span></span></div>
@@ -350,6 +356,10 @@ export default function App() {
           <div className="add-options"><div className="quantity-control"><label htmlFor="quantity">{t("Qtd.")}</label><input id="quantity" type="number" min="1" max="999" value={quantity} onChange={e => setQuantity(e.target.value)}/></div><span className="option-separator"/><label className="category-select-label" htmlFor="category-select">{t("Categoria")}</label><select id="category-select" value={category} onChange={e => setCategory(e.target.value)}><option value="auto">{t("Automática")}</option>{CATEGORIES.filter(c => c.id !== "all").map(c => <option key={c.id} value={c.id}>{c.emoji} {t(c.label)}</option>)}</select></div>
         </form>
       </section>
+      <nav className="quick-actions" aria-label={t("Ações rápidas")}>
+        <button type="button" className="quick-action" onClick={() => doneItems.length ? repeatItem(doneItems[0].name) : document.querySelector(".add-main input")?.focus()}><span className="quick-action-icon">↻</span>{t("Repetir compras")}</button>
+        <button type="button" className="quick-action" onClick={() => { setShoppingMode(false); document.querySelector(".templates-section")?.scrollIntoView({ behavior: "smooth", block: "center" }); }}><span className="quick-action-icon"><span className="folder-glyph">▱</span></span>{t("Listas guardadas")}</button>
+      </nav>
       <section className={templates.length ? "templates-section" : "templates-section is-empty"} hidden={shoppingMode}>
         <div className="templates-title-row"><span>{t("Listas reutilizáveis")}</span><button type="button" onClick={saveCurrentTemplate} disabled={!activeItems.length}>{t("Guardar lista atual")}</button></div>
         {templates.length > 0 ? <div className="template-chips">{templates.map(template => <button type="button" className="template-chip" key={template.id} onClick={() => useTemplate(template)}><span>{template.name}</span><small>{template.items.length} {t("artigos")}</small></button>)}</div> : <p className="template-hint">{t("Guarda uma compra habitual para a reutilizares noutra semana.")}</p>}
@@ -379,6 +389,11 @@ export default function App() {
         )}
         {doneItems.length > 0 && !showDone && <button className="clear-done" onClick={clearDone}><CheckCheck size={16}/> {t("Limpar artigos comprados")}</button>}
       </section>
+      <div className="purchased-dock">
+        <button type="button" className={showDone ? "purchased-dock-button active" : "purchased-dock-button"} onClick={() => { setShowDone(!showDone); document.querySelector(".items-section")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>
+          <span>{showDone ? t("Ver por comprar") : t("Ver comprados")} ({doneItems.length})</span><ChevronDown size={19} className={showDone ? "dock-chevron rotated" : "dock-chevron"}/>
+        </button>
+      </div>
       <footer className="app-footer"><span><Leaf size={15}/> {t("Menos esquecimentos, mais tempo juntos.")}</span><button onClick={() => { if (window.confirm(t("Sair desta lista neste dispositivo? A lista partilhada não será apagada."))) { localStorage.removeItem("lista-familia-code"); setListCode(""); setList(null); setItems([]); } }}>{t("Sair da lista")}</button></footer>
       {showShare && <div className="modal-backdrop" onClick={() => setShowShare(false)}><section className="share-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="share-title"><button className="modal-close" onClick={() => setShowShare(false)} aria-label={t("Fechar")}><X size={20}/></button><div className="share-graphic"><Users size={28}/></div><h2 id="share-title">{t("A lista é melhor em família")}</h2><p>{t("Partilha o código com a família. Cada pessoa introduz o código na app para abrir a mesma lista e sincronizar as alterações.")}</p><div className="share-code-box"><span>{t("CÓDIGO DA LISTA")}</span><strong>{list.shareCode}</strong></div><button className="primary-button" onClick={shareListCode}>{typeof navigator.share === "function" ? <Users size={17}/> : <Copy size={17}/>} {t(typeof navigator.share === "function" ? "Partilhar código" : "Copiar código")}</button>{typeof navigator.share === "function" && <button className="secondary-button" onClick={copyListCode}><Clipboard size={17}/> {t("Copiar apenas o código")}</button>}<p className="share-note"><CircleHelp size={14}/> {t("Qualquer pessoa com o código pode aceder à lista. Partilha apenas com pessoas de confiança.")}</p></section></div>}
       {toast && <div className="toast"><Check size={16}/>{toast}</div>}
