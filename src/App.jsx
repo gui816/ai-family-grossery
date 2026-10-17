@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase, isSupabaseConfigured } from "./lib/supabase.js";
 import {
   ArrowRight, Check, CheckCheck, ChevronDown, CircleHelp, Clipboard, Copy, Share2, Repeat2,
-  Leaf, LoaderCircle, Plus, ShoppingBasket, Trash2, Users, Wifi, WifiOff, X
+  Camera, Mic, Leaf, LoaderCircle, Plus, ShoppingBasket, Trash2, Users, Wifi, WifiOff, X
 } from "lucide-react";
 
 const CATEGORIES = [
@@ -88,6 +88,13 @@ export default function App() {
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
   const [showShare, setShowShare] = useState(false);
+  const [importPreview, setImportPreview] = useState([]);
+  const [importSource, setImportSource] = useState("");
+  const [importBusy, setImportBusy] = useState(false);
+  const [importError, setImportError] = useState("");
+  const [listening, setListening] = useState(false);
+  const imageInputRef = useRef(null);
+  const recognitionRef = useRef(null);
 
   const activeItems = useMemo(() => items.filter(i => !i.done), [items]);
   const doneItems = useMemo(() => items.filter(i => i.done), [items]);
@@ -200,6 +207,134 @@ export default function App() {
       setName(""); setQuantity("1"); setCategory("auto");
       return true;
     } catch (err) { setError(err.message); return false; }
+  }
+
+  function parseGeminiItems(payload) {
+    const text = payload?.candidates?.[0]?.content?.parts?.map(part => part.text || "").join("") || "";
+    const cleaned = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+    const parsed = JSON.parse(cleaned);
+    const source = Array.isArray(parsed) ? parsed : parsed.items;
+    if (!Array.isArray(source)) throw new Error("O Gemini não devolveu uma lista válida.");
+    return source.map(item => ({
+      name: String(item.name || item.product || "").trim().replace(/\s+/g, " ").slice(0, 100),
+      quantity: Math.max(1, Math.min(999, Number.parseInt(item.quantity, 10) || 1))
+    })).filter(item => item.name).slice(0, 60);
+  }
+
+  async function callGemini({ text, image }) {
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (!apiKey) throw new Error("Falta configurar GEMINI_API_KEY nos GitHub Secrets e voltar a gerar o APK.");
+    const prompt = [
+      "You extract shopping-list items. Return ONLY valid JSON in this exact shape: {\"items\":[{\"name\":\"product name\",\"quantity\":1}]}.",
+      "Identify only purchasable product names and quantities explicitly stated or clearly written. Do not invent products, brands, units, prices, headings, notes, or recipes.",
+      "If no quantity is present, use quantity 1. Quantity must be an integer from 1 to 999.",
+      "Preserve the language of each product and use concise product names. Merge obvious duplicate mentions by adding quantities.",
+      "If text/image is unclear, omit uncertain entries. Maximum 60 items.",
+      text ? "Shopping list dictated by the user: " + text : "Read the handwritten or printed shopping list in the attached image."
+    ].join("\n");
+    const parts = [{ text: prompt }];
+    if (image) parts.push({ inlineData: { mimeType: image.mimeType, data: image.data } });
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts }],
+        generationConfig: { responseMimeType: "application/json", responseSchema: {
+          type: "OBJECT", properties: { items: { type: "ARRAY", maxItems: 60, items: {
+            type: "OBJECT", properties: { name: { type: "STRING" }, quantity: { type: "INTEGER" } },
+            required: ["name", "quantity"], propertyOrdering: ["name", "quantity"]
+          }}}, required: ["items"], propertyOrdering: ["items"]
+        }, temperature: 0.1 }
+      })
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const detail = payload?.error?.message;
+      throw new Error(detail || `Erro na API Gemini (${response.status}). Confirma a chave e o acesso ao modelo.`);
+    }
+    return parseGeminiItems(payload);
+  }
+
+  async function processPhoto(file) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { setImportError("Escolhe um ficheiro de imagem."); return; }
+    if (file.size > 12 * 1024 * 1024) { setImportError("A imagem deve ter menos de 12 MB."); return; }
+    setImportBusy(true); setImportError(""); setImportSource("photo");
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error("Não foi possível ler a imagem."));
+        reader.readAsDataURL(file);
+      });
+      const base64 = dataUrl.split(",")[1];
+      const itemsFound = await callGemini({ image: { mimeType: file.type, data: base64 } });
+      if (!itemsFound.length) throw new Error("Não consegui identificar produtos. Tenta uma fotografia mais nítida.");
+      setImportPreview(itemsFound);
+    } catch (err) { setImportError(err.message || "Não foi possível interpretar a imagem."); }
+    finally { setImportBusy(false); if (imageInputRef.current) imageInputRef.current.value = ""; }
+  }
+
+  async function startVoiceImport() {
+    setImportError("");
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setImportError("O reconhecimento de voz não está disponível neste navegador. Experimenta usar o microfone do teclado para ditar no campo de texto.");
+      return;
+    }
+    if (listening) { recognitionRef.current?.stop(); setListening(false); return; }
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = language === "pt-PT" ? "pt-PT" : language;
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognitionRef.current = recognition;
+      recognition.onstart = () => setListening(true);
+      recognition.onerror = event => {
+        setListening(false);
+        setImportError(event.error === "not-allowed" ? "Permite o acesso ao microfone para ditar produtos." : "Não foi possível reconhecer a voz. Tenta novamente.");
+      };
+      recognition.onend = () => setListening(false);
+      recognition.onresult = async event => {
+        const transcript = event.results?.[0]?.[0]?.transcript?.trim();
+        if (!transcript) { setImportError("Não foi detetado discurso."); return; }
+        setImportBusy(true); setImportSource("voice"); setImportError("");
+        try {
+          const itemsFound = await callGemini({ text: transcript });
+          if (!itemsFound.length) throw new Error("Não foram identificados produtos na frase. Tenta novamente.");
+          setImportPreview(itemsFound);
+        } catch (err) { setImportError(err.message || "Não foi possível interpretar a voz."); }
+        finally { setImportBusy(false); }
+      };
+      recognition.start();
+    } catch {
+      setListening(false);
+      setImportError("Não foi possível iniciar o microfone neste dispositivo.");
+    }
+  }
+
+  function editPreviewItem(index, changes) {
+    setImportPreview(previous => previous.map((item, i) => i === index ? { ...item, ...changes } : item));
+  }
+
+  async function confirmImport() {
+    const validItems = importPreview.filter(item => item.name.trim()).map(item => ({
+      name: item.name.trim().slice(0, 100),
+      quantity: Math.max(1, Math.min(999, Number.parseInt(item.quantity, 10) || 1))
+    }));
+    if (!validItems.length) { setImportError("Adiciona pelo menos um produto."); return; }
+    setImportBusy(true); setImportError("");
+    let added = 0;
+    try {
+      for (const item of validItems) {
+        if (!await submitItem(item.name, item.quantity, "auto")) throw new Error("Alguns produtos não foram adicionados. Podes tentar novamente.");
+        added += 1;
+      }
+      setImportPreview([]);
+      setImportSource("");
+      notify(`${added} ${added === 1 ? "produto adicionado" : "produtos adicionados"}`);
+    } finally { setImportBusy(false); }
   }
 
   async function addItem(e) {
@@ -352,7 +487,7 @@ export default function App() {
       </section>
       <section className="add-panel">
         <form onSubmit={addItem}>
-          <div className="add-main"><button type="submit" className="input-plus add-submit-left" aria-label={t("Adicionar artigo")} disabled={!name.trim()}><Plus size={22}/></button><input list="item-history-suggestions" value={name} onChange={e => setName(e.target.value)} placeholder={t("O que está a faltar em casa?")} aria-label={t("Nome do artigo")} maxLength={100}/><datalist id="item-history-suggestions">{suggestions.map(itemName => <option key={itemName} value={itemName}/>)}</datalist></div>
+          <div className="add-main"><button type="submit" className="input-plus add-submit-left" aria-label={t("Adicionar artigo")} disabled={!name.trim()}><Plus size={22}/></button><input list="item-history-suggestions" value={name} onChange={e => setName(e.target.value)} placeholder={t("O que está a faltar em casa?")} aria-label={t("Nome do artigo")} maxLength={100}/><datalist id="item-history-suggestions">{suggestions.map(itemName => <option key={itemName} value={itemName}/>)}</datalist></div><div className="ai-import-actions"><button type="button" onClick={() => imageInputRef.current?.click()} disabled={importBusy} className="ai-import-button"><Camera size={17}/> Fotografar lista</button><button type="button" onClick={startVoiceImport} disabled={importBusy} className={listening ? "ai-import-button recording" : "ai-import-button"}><Mic size={17}/>{listening ? "A ouvir… toca para parar" : "Adicionar por voz"}</button><input ref={imageInputRef} type="file" accept="image/*" capture="environment" hidden onChange={e => processPhoto(e.target.files?.[0])}/></div>{(importBusy || importError) && <div className={importError ? "ai-import-status error-message" : "ai-import-status"}>{importBusy && <LoaderCircle size={15} className="spin"/>}{importBusy ? (importSource === "photo" ? "A analisar a fotografia…" : "A interpretar os produtos…") : importError}</div>}
           <div className="add-options"><div className="quantity-control"><label htmlFor="quantity">{t("Qtd.")}</label><input id="quantity" type="number" min="1" max="999" value={quantity} onChange={e => setQuantity(e.target.value)}/></div><span className="option-separator"/><label className="category-select-label" htmlFor="category-select">{t("Categoria")}</label><select id="category-select" value={category} onChange={e => setCategory(e.target.value)}><option value="auto">{t("Automática")}</option>{CATEGORIES.filter(c => c.id !== "all").map(c => <option key={c.id} value={c.id}>{c.emoji} {t(c.label)}</option>)}</select></div>
         </form>
       </section>
@@ -395,6 +530,7 @@ export default function App() {
         </button>
       </div>
       <footer className="app-footer"><span><Leaf size={15}/> {t("Menos esquecimentos, mais tempo juntos.")}</span><button onClick={() => { if (window.confirm(t("Sair desta lista neste dispositivo? A lista partilhada não será apagada."))) { localStorage.removeItem("lista-familia-code"); setListCode(""); setList(null); setItems([]); } }}>{t("Sair da lista")}</button></footer>
+      {importPreview.length > 0 && <div className="modal-backdrop" onClick={() => !importBusy && setImportPreview([])}><section className="share-modal import-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="import-title"><button className="modal-close" onClick={() => !importBusy && setImportPreview([])} aria-label={t("Fechar")}><X size={20}/></button><div className="share-graphic"><ShoppingBasket size={28}/></div><h2 id="import-title">Confirmar produtos</h2><p>{importSource === "photo" ? "Revê os produtos reconhecidos na fotografia." : "Revê os produtos reconhecidos por voz."} Podes corrigir os nomes e quantidades antes de adicionar.</p><div className="import-preview-list">{importPreview.map((item, index) => <div className="import-preview-row" key={index}><input aria-label={`Produto ${index + 1}`} value={item.name} maxLength={100} onChange={e => editPreviewItem(index, { name: e.target.value })}/><input aria-label={`Quantidade de ${item.name}`} type="number" min="1" max="999" value={item.quantity} onChange={e => editPreviewItem(index, { quantity: e.target.value })}/><button type="button" aria-label={`Remover ${item.name}`} onClick={() => setImportPreview(previous => previous.filter((_, i) => i !== index))}><X size={17}/></button></div>)}</div>{importError && <p className="error-message">{importError}</p>}<button className="primary-button" disabled={importBusy || !importPreview.some(item => item.name.trim())} onClick={confirmImport}>{importBusy ? <LoaderCircle className="spin" size={17}/> : <Check size={17}/>} {importBusy ? "A adicionar…" : `Adicionar ${importPreview.length} produtos`}</button><button className="secondary-button" disabled={importBusy} onClick={() => setImportPreview([])}>Cancelar</button></section></div>}
       {showShare && <div className="modal-backdrop" onClick={() => setShowShare(false)}><section className="share-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="share-title"><button className="modal-close" onClick={() => setShowShare(false)} aria-label={t("Fechar")}><X size={20}/></button><div className="share-graphic"><Users size={28}/></div><h2 id="share-title">{t("A lista é melhor em família")}</h2><p>{t("Partilha o código com a família. Cada pessoa introduz o código na app para abrir a mesma lista e sincronizar as alterações.")}</p><div className="share-code-box"><span>{t("CÓDIGO DA LISTA")}</span><strong>{list.shareCode}</strong></div><button className="primary-button" onClick={shareListCode}>{typeof navigator.share === "function" ? <Users size={17}/> : <Copy size={17}/>} {t(typeof navigator.share === "function" ? "Partilhar código" : "Copiar código")}</button>{typeof navigator.share === "function" && <button className="secondary-button" onClick={copyListCode}><Clipboard size={17}/> {t("Copiar apenas o código")}</button>}<p className="share-note"><CircleHelp size={14}/> {t("Qualquer pessoa com o código pode aceder à lista. Partilha apenas com pessoas de confiança.")}</p></section></div>}
       {toast && <div className="toast"><Check size={16}/>{toast}</div>}
       {error && <button className="error-toast" onClick={() => setError("")}>{error}<X size={15}/></button>}
