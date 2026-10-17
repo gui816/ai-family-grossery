@@ -135,3 +135,7 @@
  .item-name{font-size:15px}
  .purchased-dock{padding-left:13px;padding-right:13px}
 }
+
+.add-main .add-submit-left{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;border:0;border-radius:12px;background:transparent;color:#536b53;padding:0}
+.add-main .add-submit-left:disabled{opacity:.55;cursor:not-allowed}
+.add-main .add-submit-left:active:not(:disabled){background:#e5eddf}
