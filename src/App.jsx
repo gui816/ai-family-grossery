@@ -259,6 +259,23 @@ export default function App() {
     if (!file) return;
     if (!file.type.startsWith("image/")) { setImportError("Escolhe um ficheiro de imagem."); return; }
     if (file.size > 12 * 1024 * 1024) { setImportError("A imagem deve ter menos de 12 MB."); return; }
+    setImportError("");
+    // Request camera permission only when the user chooses to take a photo.
+    if (navigator.mediaDevices?.getUserMedia) {
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } } });
+      } catch (permissionError) {
+        const denied = permissionError?.name === "NotAllowedError" || permissionError?.name === "PermissionDeniedError";
+        setImportError(denied
+          ? t("O acesso à câmara foi recusado. Ativa a permissão nas definições da aplicação.")
+          : t("Não foi possível aceder à câmara neste dispositivo."));
+        if (imageInputRef.current) imageInputRef.current.value = "";
+        return;
+      } finally {
+        stream?.getTracks().forEach(track => track.stop());
+      }
+    }
     setImportBusy(true); setImportError(""); setImportSource("photo");
     try {
       const dataUrl = await new Promise((resolve, reject) => {
