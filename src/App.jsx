@@ -284,6 +284,22 @@ export default function App() {
     }
     if (listening) { recognitionRef.current?.stop(); setListening(false); return; }
     try {
+      // Ask for microphone access on the user gesture before starting recognition.
+      // This allows Android/WebView to show its permission dialog when supported.
+      if (navigator.mediaDevices?.getUserMedia) {
+        let stream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (permissionError) {
+          const denied = permissionError?.name === "NotAllowedError" || permissionError?.name === "PermissionDeniedError";
+          setImportError(denied
+            ? t("O acesso ao microfone foi recusado. Ativa a permissão nas definições da aplicação.")
+            : t("Não foi possível aceder ao microfone neste dispositivo."));
+          return;
+        } finally {
+          stream?.getTracks().forEach(track => track.stop());
+        }
+      }
       const recognition = new SpeechRecognition();
       recognition.lang = language === "pt-PT" ? "pt-PT" : language;
       recognition.continuous = false;
@@ -293,7 +309,9 @@ export default function App() {
       recognition.onstart = () => setListening(true);
       recognition.onerror = event => {
         setListening(false);
-        setImportError(event.error === "not-allowed" ? "Permite o acesso ao microfone para ditar produtos." : "Não foi possível reconhecer a voz. Tenta novamente.");
+        setImportError(event.error === "not-allowed"
+          ? t("O acesso ao microfone foi recusado. Ativa a permissão nas definições da aplicação.")
+          : t("Não foi possível reconhecer a voz. Tenta novamente."));
       };
       recognition.onend = () => setListening(false);
       recognition.onresult = async event => {
