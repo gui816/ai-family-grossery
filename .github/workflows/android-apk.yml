@@ -44,9 +44,13 @@ jobs:
           from pathlib import Path
           manifest = Path("android/app/src/main/AndroidManifest.xml")
           xml = manifest.read_text()
-          permission = '<uses-permission android:name="android.permission.RECORD_AUDIO" />'
-          if permission not in xml:
-              xml = xml.replace("<application", f"    {permission}\n    <application", 1)
+          permissions = [
+              '<uses-permission android:name="android.permission.RECORD_AUDIO" />',
+              '<uses-permission android:name="android.permission.CAMERA" />',
+          ]
+          for permission in permissions:
+              if permission not in xml:
+                  xml = xml.replace("<application", f"    {permission}\n    <application", 1)
           manifest.write_text(xml)
           PY
 
