@@ -38,6 +38,18 @@ jobs:
       - name: Generate Android project
         run: npx cap add android
 
+      - name: Declare Android microphone permission
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          xml = manifest.read_text()
+          permission = '<uses-permission android:name="android.permission.RECORD_AUDIO" />'
+          if permission not in xml:
+              xml = xml.replace("<application", f"    {permission}\n    <application", 1)
+          manifest.write_text(xml)
+          PY
+
       - name: Sync web assets
         run: npx cap sync android
 
