@@ -14,7 +14,7 @@ class AppErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error) {
-    console.error("FamList failed to render:", error);
+    console.error("Listora failed to render:", error);
   }
 
   render() {
@@ -32,6 +32,14 @@ class AppErrorBoundary extends React.Component {
     }
     return this.props.children;
   }
+}
+
+if ("serviceWorker" in navigator && import.meta.env.PROD) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch((error) => {
+      console.warn("Listora offline support could not be enabled:", error);
+    });
+  });
 }
 
 createRoot(document.getElementById("root")).render(
