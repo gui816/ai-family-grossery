@@ -223,7 +223,7 @@ export default function App() {
 
   async function callGemini({ text, image }) {
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    if (!apiKey) throw new Error("Falta configurar GEMINI_API_KEY nos GitHub Secrets e voltar a gerar o APK.");
+    if (!apiKey) throw new Error("A importação inteligente por voz ou fotografia ainda não está disponível nesta versão web. Estamos a preparar a ligação segura ao serviço de IA.");
     const prompt = [
       "You extract shopping-list items. Return ONLY valid JSON in this exact shape: {\"items\":[{\"name\":\"product name\",\"quantity\":1}]}.",
       "Identify only purchasable product names and quantities explicitly stated or clearly written. Do not invent products, brands, units, prices, headings, notes, or recipes.",
