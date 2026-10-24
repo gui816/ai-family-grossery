@@ -275,3 +275,54 @@
 
 .clear-all-items{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin:12px 0 4px;padding:12px 16px;border:1px solid #e5c9c4;border-radius:14px;background:#fff8f6;color:#9a4a40;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 .clear-all-items:active{background:#f8e9e5}
+
+
+/* Compact, clear product entry and faster import actions */
+.add-panel:not([hidden]){border:2px solid #91b88a;box-shadow:0 0 0 3px #eaf2e6,0 8px 22px #2e3d2808;padding:10px 13px}
+.add-main input{font-size:15px;font-weight:600}
+.add-main input::placeholder{color:#7e8978;font-weight:500}
+.add-main>button{width:42px;height:42px;flex:0 0 42px}
+.quick-add-chips{display:flex;gap:7px;padding:7px 0 10px 51px;flex-wrap:wrap}
+.quick-add-chips button{display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border:1px solid #dce7d6;border-radius:999px;background:#f7faf4;color:#496b43;font-size:11px;font-weight:700}
+.smart-add-section{margin-top:2px;padding:10px 0 2px;border:0;border-top:1px solid #e6ebdf;border-radius:0;background:transparent;box-shadow:none}
+.smart-add-heading{flex-direction:row;align-items:baseline;justify-content:space-between;gap:8px;margin:0 0 8px}
+.smart-add-heading>span{font-size:9px;letter-spacing:1px}
+.smart-add-heading small{font-size:10px;text-align:right}
+.ai-import-actions{gap:8px}
+.ai-import-button{min-height:61px;padding:8px 10px;gap:8px;border-radius:12px;box-shadow:none}
+.ai-import-icon{width:34px;height:34px;flex-basis:34px;border-radius:10px}
+.ai-import-copy{gap:3px}
+.ai-import-copy strong{font-size:12px}
+.ai-import-copy small{font-size:10px;line-height:1.3}
+.ai-import-copy .ai-import-detail{color:#496b43;font-size:9px}
+.ai-import-arrow{display:none}
+@media(max-width:420px){
+ .smart-add-heading{align-items:flex-start;flex-direction:column;gap:3px}
+ .smart-add-heading small{text-align:left}
+ .ai-import-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ .ai-import-button{min-height:75px;padding:8px 7px;align-items:flex-start;gap:6px}
+ .ai-import-icon{width:29px;height:29px;flex-basis:29px}
+ .ai-import-icon svg{width:18px;height:18px}
+ .ai-import-copy strong{font-size:11px}
+ .ai-import-copy small{font-size:9px}
+ .ai-import-copy .ai-import-detail{display:none}
+ .quick-add-chips{padding-left:0}
+}
+.supermarket-summary{margin:14px 0 8px;padding:17px;border:1px solid #d9e6d2;border-radius:20px;background:linear-gradient(140deg,#edf5e8,#f9faf4)}
+.supermarket-summary-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.supermarket-kicker{font-size:9px;letter-spacing:1.3px;font-weight:800;color:#5d8056}
+.supermarket-summary-top h2{font-size:21px;letter-spacing:-.5px;margin:4px 0 0;color:#263b29}
+.supermarket-summary-top>strong{font-size:25px;letter-spacing:-1px;color:#315536;white-space:nowrap}
+.supermarket-summary-top>strong span{font-size:14px;color:#899583;font-weight:600;letter-spacing:0}
+.supermarket-progress-track{height:8px;margin:15px 0 10px;border-radius:99px;background:#dce6d6;overflow:hidden}
+.supermarket-progress-track span{height:100%;display:block;border-radius:99px;background:#4e8548;transition:width .2s ease}
+.supermarket-summary-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#687563;font-size:11px}
+.purchased-filter{border:1px solid #d3e1cd;border-radius:999px;background:#fffefa;padding:7px 10px;color:#426b46;font-size:11px;font-weight:700;white-space:nowrap}
+.purchased-filter.active{background:#315536;color:white;border-color:#315536}
+.shopping-mode-row.active{background:#e5f0df;border-color:#cbdcc3}
+.supermarket-items-section .section-heading{margin-top:12px}
+.supermarket-items-section .section-heading h2{font-size:12px;color:#6b7c65}
+.supermarket-items-section .supermarket-list .shopping-item{min-height:74px}
+.supermarket-items-section .shopping-item{min-height:74px}
+.supermarket-items-section .check-button{width:32px;height:32px;flex-basis:32px}
+.supermarket-items-section .clear-all-items,.supermarket-items-section .clear-done{display:none}
