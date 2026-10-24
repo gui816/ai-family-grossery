@@ -175,3 +175,41 @@
 .ai-import-button.recording{background:#fff0eb;border-color:#e8a18e;color:#a23e2b}
 .ai-import-button.recording .ai-import-icon{background:#f9dcd4;color:#a23e2b}
 @media(max-width:420px){.smart-add-section{padding:11px}.ai-import-actions{grid-template-columns:1fr;gap:8px}.ai-import-button{min-height:66px;padding:10px 12px}.ai-import-icon{width:40px;height:40px;flex-basis:40px}.ai-import-copy strong{font-size:13px}.ai-import-copy small{font-size:11px}}
+
+
+/* Shared shopping/receipt tabs */
+.main-tabs{display:flex;gap:8px;padding:18px 0 2px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.main-tab{display:flex;align-items:center;justify-content:center;gap:8px;flex:1;border:0;border-bottom:3px solid transparent;background:transparent;color:#7c8377;padding:13px 8px;font-size:13px;font-weight:700;margin-bottom:-1px}
+.main-tab.active{color:var(--green);border-bottom-color:var(--green)}
+.main-tab span{font-size:10px;background:#edf2e9;border-radius:99px;padding:3px 7px}
+.invite-qr{display:flex;align-items:center;flex-direction:column;gap:10px;background:#f8faf4;border:1px solid #e8ede3;border-radius:16px;padding:18px;margin:0 0 14px}
+.invite-qr svg{max-width:100%;height:auto;background:white;padding:8px;border-radius:8px}
+.invite-qr span{font-size:11px;color:#697363}
+.receipts-section{padding:25px 0 30px}
+.receipts-heading h1{font-family:Manrope,sans-serif;font-size:27px;letter-spacing:-.8px;margin:8px 0}
+.receipts-heading p{font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 20px}
+.receipt-form{display:grid;gap:9px;padding:18px;background:var(--paper);border:1px solid var(--line);border-radius:17px;margin-bottom:25px}
+.receipt-form h2{display:flex;align-items:center;gap:8px;font-size:15px;margin:0 0 6px}
+.receipt-form label{font-size:11px;font-weight:700;color:#596252}
+.receipt-form input:not([type=file]),.receipt-form textarea{width:100%;min-width:0;border:1px solid #e0e4d9;border-radius:10px;padding:11px 12px;background:#fffefa;color:var(--ink);font:inherit;font-size:12px}
+.receipt-form textarea{min-height:72px;resize:vertical}
+.receipt-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.receipt-form-grid>div{display:grid;gap:8px;min-width:0}
+.receipt-file-label{display:flex;align-items:center;gap:8px;border:1px dashed #d5dfce;border-radius:11px;padding:12px;color:var(--green)!important;cursor:pointer}
+.receipt-file-label span{flex:1;overflow-wrap:anywhere}
+.receipt-file-label small{font-size:10px;color:#8b9286;font-weight:400}
+.receipt-file-input{width:100%;font-size:11px;color:#7c8377}
+.receipt-list-heading{display:flex;justify-content:space-between;align-items:center;margin:12px 0}
+.receipt-list-heading h2{font-size:15px;margin:0}
+.receipt-list-heading span{font-size:11px;color:var(--muted)}
+.receipt-list{display:flex;flex-direction:column;gap:9px}
+.receipt-card{display:flex;align-items:flex-start;gap:11px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:13px}
+.receipt-card-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:11px;background:var(--mint);color:var(--green);flex:0 0 38px}
+.receipt-card-main{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1}
+.receipt-card-main>strong{font-size:13px}
+.receipt-card-main>span{font-size:10px;color:var(--muted);line-height:1.4}
+.receipt-card-main p{font-size:11px;color:#687061;margin:2px 0 0;overflow-wrap:anywhere}
+.receipt-card-side{display:flex;align-items:flex-end;flex-direction:column;gap:7px}
+.receipt-card-side>strong{font-size:12px;white-space:nowrap}
+.receipt-card-side button{display:grid;place-items:center;border:0;border-radius:7px;background:#f1f4ec;color:var(--green);padding:6px}
+@media(max-width:420px){.receipt-form-grid{grid-template-columns:1fr}.main-tab{font-size:11px}.receipt-card{gap:8px;padding:10px}.receipt-card-icon{width:32px;height:32px;flex-basis:32px}.receipt-card-side>strong{font-size:11px}}
