@@ -643,6 +643,7 @@ export default function App() {
           <div className="refined-brand-copy"><span className="brand-name">Listora</span><span className="list-name-inline">{displayListName}<ChevronDown size={15}/></span></div>
         </div>
         <div className="topbar-actions">
+          <LanguagePicker language={language} onChange={setLanguage} />
           <button className="icon-action" onClick={() => setShowShare(true)} aria-label={t("Partilhar")} title={t("Partilhar")}><Share2 size={22}/></button>
           <button className="icon-action" onClick={() => { if (doneItems.length) repeatItem(doneItems[0].name); else document.querySelector(".add-main input")?.focus(); }} aria-label={t("Repetir compras")} title={t("Repetir compras")}><Repeat2 size={22}/></button>
         </div>
