@@ -55,17 +55,17 @@ serve(async (req) => {
           responseSchema: {
             type: "OBJECT",
             properties: {
-              storeName: { type: ["STRING", "NULL"] },
-              purchasedAt: { type: ["STRING", "NULL"] },
-              total: { type: ["NUMBER", "NULL"] },
-              vatTotal: { type: ["NUMBER", "NULL"] },
+              storeName: { type: "STRING", nullable: true },
+              purchasedAt: { type: "STRING", nullable: true },
+              total: { type: "NUMBER", nullable: true },
+              vatTotal: { type: "NUMBER", nullable: true },
               confidence: { type: "STRING", enum: ["low", "medium", "high"] },
               warnings: { type: "ARRAY", maxItems: 3, items: { type: "STRING" } },
               items: { type: "ARRAY", maxItems: 40, items: {
                 type: "OBJECT",
                 properties: {
                   name: { type: "STRING" },
-                  total: { type: ["NUMBER", "NULL"] },
+                  total: { type: "NUMBER", nullable: true },
                 },
                 required: ["name", "total"],
                 propertyOrdering: ["name", "total"],
