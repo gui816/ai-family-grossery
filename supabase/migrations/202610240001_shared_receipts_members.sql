@@ -38,35 +38,34 @@ on conflict (id) do nothing;
 
 -- The share code is the existing invite secret. Receipt objects are private and
 -- stored under <share_code>/<receipt_uuid>/<filename>.
+create or replace function public.receipt_share_code_exists(p_code text)
+returns boolean language sql stable security definer set search_path = ''
+as $
+  select exists (select 1 from public.family_lists where share_code = p_code);
+$;
+revoke all on function public.receipt_share_code_exists(text) from public, anon, authenticated;
+grant execute on function public.receipt_share_code_exists(text) to anon, authenticated;
+
 drop policy if exists "List members can read receipt files" on storage.objects;
 create policy "List members can read receipt files"
 on storage.objects for select to anon, authenticated
 using (
   bucket_id = 'family-receipts'
-  and exists (
-    select 1 from public.family_lists l
-    where l.share_code = split_part(name, '/', 1)
-  )
+  and public.receipt_share_code_exists(split_part(name, '/', 1))
 );
 drop policy if exists "List members can upload receipt files" on storage.objects;
 create policy "List members can upload receipt files"
 on storage.objects for insert to anon, authenticated
 with check (
   bucket_id = 'family-receipts'
-  and exists (
-    select 1 from public.family_lists l
-    where l.share_code = split_part(name, '/', 1)
-  )
+  and public.receipt_share_code_exists(split_part(name, '/', 1))
 );
 drop policy if exists "List members can delete receipt files" on storage.objects;
 create policy "List members can delete receipt files"
 on storage.objects for delete to anon, authenticated
 using (
   bucket_id = 'family-receipts'
-  and exists (
-    select 1 from public.family_lists l
-    where l.share_code = split_part(name, '/', 1)
-  )
+  and public.receipt_share_code_exists(split_part(name, '/', 1))
 );
 
 create or replace function public.family_list_payload(p_list_id uuid)
