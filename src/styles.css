@@ -253,3 +253,20 @@
 .refined-topbar .language-picker{flex:0 0 auto;max-width:108px;min-height:38px}
 .refined-topbar .language-picker select{max-width:76px}
 @media(max-width:390px){.refined-topbar .topbar-actions{gap:4px}.refined-topbar .language-picker{max-width:94px;padding:5px}.refined-topbar .language-picker select{max-width:62px;font-size:9px}.refined-topbar .icon-action{width:34px}}
+
+
+/* Preserve the full list name on narrow screens when the language selector is present. */
+.refined-topbar .refined-brand{flex:1 1 auto;min-width:0}
+.refined-topbar .refined-brand-copy{flex:1 1 auto;min-width:0}
+.refined-topbar .list-name-inline{max-width:none;width:100%;min-width:0}
+.refined-topbar .topbar-actions{flex:0 0 auto}
+@media(max-width:600px){
+ .refined-topbar{gap:8px}
+ .refined-topbar .refined-brand{gap:9px}
+ .refined-topbar .brand-mark{width:42px;height:42px;flex-basis:42px}
+ .refined-topbar .language-picker{max-width:88px;gap:3px}
+ .refined-topbar .language-picker span{font-size:12px}
+ .refined-topbar .language-picker select{max-width:57px;font-size:9px}
+ .refined-topbar .topbar-actions{gap:2px}
+ .refined-topbar .icon-action{width:32px}
+}
