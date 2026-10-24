@@ -328,3 +328,12 @@
 .supermarket-items-section .clear-all-items,.supermarket-items-section .clear-done{display:none}
 
 .add-panel[hidden],.quick-actions[hidden]{display:none!important}
+
+
+.receipt-name-prompt{display:flex;flex-direction:column;gap:9px;margin:8px 0 16px;padding:15px;border:1px solid #e7c9a2;border-radius:14px;background:#fff9ef}
+.receipt-name-prompt strong{font-size:14px;line-height:1.4;color:#614321}
+.receipt-name-prompt label{font-size:12px;font-weight:700}
+.receipt-name-prompt input{width:100%;min-width:0}
+.receipt-name-prompt small{font-size:11px;color:#7a6c5d;line-height:1.45}
+.receipt-name-prompt .secondary-button{align-self:flex-start}
+.receipt-ai-progress{display:flex;align-items:center;gap:8px}
