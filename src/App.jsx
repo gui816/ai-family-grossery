@@ -124,9 +124,10 @@ export default function App() {
   const activeItems = useMemo(() => items.filter(i => !i.done), [items]);
   const doneItems = useMemo(() => items.filter(i => i.done), [items]);
   const visibleItems = useMemo(() => {
-    const source = shoppingMode || !showDone ? activeItems : items;
+    const source = shoppingMode ? (showDone ? doneItems : activeItems) : (showDone ? items : activeItems);
     return source.filter(i => filter === "all" || i.category === filter);
-  }, [items, activeItems, filter, showDone, shoppingMode]);
+  }, [items, activeItems, doneItems, filter, showDone, shoppingMode]);
+  const shoppingProgress = items.length ? Math.round((doneItems.length / items.length) * 100) : 0;
   const suggestions = useMemo(() => [...new Map([...items.map(item => item.name), ...itemHistory].map(value => [value.toLocaleLowerCase(), value])).values()].slice(0, 30), [items, itemHistory]);
 
   useEffect(() => {
@@ -681,13 +682,15 @@ export default function App() {
         <div className="list-title-line"><div><div className="eyebrow">{t("A LISTA DA CASA")}</div><h1>{displayListName}</h1></div><span className={`sync-status ${connected ? "online" : ""}`} title={connected ? t("Sincronização ativa") : t("A ligar")}>{connected ? <Wifi size={15}/> : <WifiOff size={15}/>}<span>{connected ? t("Sincronizada") : t("A ligar…")}</span></span></div>
         <div className="progress-line"><div className="progress-track"><span style={{ width: `${items.length ? (doneItems.length / items.length) * 100 : 0}%` }}/></div><span>{doneItems.length} {t("de")} {items.length} {t("comprados")}</span></div>
       </section>
-      <section className="add-panel">
+      <section className="add-panel" hidden={shoppingMode}>
         <form onSubmit={addItem}>
-          <div className="add-main"><button type="submit" className="input-plus add-submit-left" aria-label={t("Adicionar artigo")} disabled={!name.trim()}><Plus size={22}/></button><input list="item-history-suggestions" value={name} onChange={e => setName(e.target.value)} placeholder={t("O que está a faltar em casa?")} aria-label={t("Nome do artigo")} maxLength={100}/><datalist id="item-history-suggestions">{suggestions.map(itemName => <option key={itemName} value={itemName}/>)}</datalist></div><section className="smart-add-section" aria-label="Adicionar artigos rapidamente"><div className="smart-add-heading"><span>ADICIONAR MAIS RÁPIDO</span><small>Escolhe como queres adicionar os produtos</small></div><div className="ai-import-actions"><button type="button" onClick={() => imageInputRef.current?.click()} disabled={importBusy} className="ai-import-button ai-import-photo"><span className="ai-import-icon"><Camera size={22}/></span><span className="ai-import-copy"><strong>Fotografar lista</strong><small>Importa produtos de uma fotografia</small></span><ArrowRight size={18} className="ai-import-arrow"/></button><button type="button" onClick={startVoiceImport} disabled={importBusy} className={listening ? "ai-import-button ai-import-voice recording" : "ai-import-button ai-import-voice"}><span className="ai-import-icon"><Mic size={22}/></span><span className="ai-import-copy"><strong>{listening ? "A ouvir… toca para parar" : "Adicionar por voz"}</strong><small>{listening ? "Diz os produtos que precisas" : "Dita os produtos sem escrever"}</small></span><ArrowRight size={18} className="ai-import-arrow"/></button><input ref={imageInputRef} type="file" accept="image/*" capture="environment" hidden onChange={e => processPhoto(e.target.files?.[0])}/></div></section>{(importBusy || importError) && <div className={importError ? "ai-import-status error-message" : "ai-import-status"}>{importBusy && <LoaderCircle size={15} className="spin"/>}{importBusy ? (importSource === "photo" ? "A analisar a fotografia…" : "A interpretar os produtos…") : importError}</div>}
+          <div className="add-main"><button type="submit" className="input-plus add-submit-left" aria-label={t("Adicionar artigo")} disabled={!name.trim()}><Plus size={22}/></button><input list="item-history-suggestions" value={name} onChange={e => setName(e.target.value)} placeholder="Adicionar produto…" aria-label={t("Nome do artigo")} maxLength={100}/><datalist id="item-history-suggestions">{suggestions.map(itemName => <option key={itemName} value={itemName}/>)}</datalist></div>
+          <div className="quick-add-chips" aria-label="Sugestões rápidas">{["Leite","Pão","Água"].map(itemName => <button type="button" key={itemName} onClick={() => submitItem(itemName)}><Plus size={13}/>{itemName}</button>)}</div>
+          <section className="smart-add-section" aria-label="Adicionar artigos rapidamente"><div className="smart-add-heading"><span>ADICIONAR MAIS RÁPIDO</span><small>Fotografa uma lista em papel ou dita os produtos</small></div><div className="ai-import-actions"><button type="button" onClick={() => imageInputRef.current?.click()} disabled={importBusy} className="ai-import-button ai-import-photo"><span className="ai-import-icon"><Camera size={21}/></span><span className="ai-import-copy"><strong>Fotografar lista</strong><small>Manuscrito, quadro ou papel</small><small className="ai-import-detail">Reconhece os produtos automaticamente</small></span></button><button type="button" onClick={startVoiceImport} disabled={importBusy} className={listening ? "ai-import-button ai-import-voice recording" : "ai-import-button ai-import-voice"}><span className="ai-import-icon"><Mic size={21}/></span><span className="ai-import-copy"><strong>{listening ? "A ouvir… toca para parar" : "Por voz"}</strong><small>{listening ? "Diz os produtos que precisas" : "Dita os produtos"}</small></span></button><input ref={imageInputRef} type="file" accept="image/*" capture="environment" hidden onChange={e => processPhoto(e.target.files?.[0])}/></div></section>{(importBusy || importError) && <div className={importError ? "ai-import-status error-message" : "ai-import-status"}>{importBusy && <LoaderCircle size={15} className="spin"/>}{importBusy ? (importSource === "photo" ? "A analisar a fotografia…" : "A interpretar os produtos…") : importError}</div>}
           <div className="add-options"><div className="quantity-control"><label htmlFor="quantity">{t("Qtd.")}</label><input id="quantity" type="number" min="1" max="999" value={quantity} onChange={e => setQuantity(e.target.value)}/></div><span className="option-separator"/><label className="category-select-label" htmlFor="category-select">{t("Categoria")}</label><select id="category-select" value={category} onChange={e => setCategory(e.target.value)}><option value="auto">{t("Automática")}</option>{CATEGORIES.filter(c => c.id !== "all").map(c => <option key={c.id} value={c.id}>{c.emoji} {t(c.label)}</option>)}</select></div>
         </form>
       </section>
-      <nav className="quick-actions" aria-label={t("Ações rápidas")}>
+      <nav className="quick-actions" hidden={shoppingMode} aria-label={t("Ações rápidas")}>
         <button type="button" className="quick-action" onClick={() => doneItems.length ? repeatItem(doneItems[0].name) : document.querySelector(".add-main input")?.focus()}><span className="quick-action-icon">↻</span>{t("Repetir compras")}</button>
         <button type="button" className="quick-action" onClick={() => { setShoppingMode(false); document.querySelector(".templates-section")?.scrollIntoView({ behavior: "smooth", block: "center" }); }}><span className="quick-action-icon"><span className="folder-glyph">▱</span></span>{t("Listas guardadas")}</button>
       </nav>
@@ -699,15 +702,20 @@ export default function App() {
         <div className="repeat-heading">{t("Repetir compras")}</div>
         <div className="repeat-chips">{[...new Map(doneItems.map(item => [item.name.toLocaleLowerCase(), item.name])).values()].slice(0, 5).map(itemName => <button type="button" className="repeat-chip" key={itemName} onClick={() => repeatItem(itemName)}><Plus size={13}/>{itemName}</button>)}</div>
       </section>}
-      <div className="shopping-mode-row">
+      <div className={shoppingMode ? "shopping-mode-row active" : "shopping-mode-row"}>
         <span><ShoppingBasket size={16}/>{t("Modo supermercado")}</span>
-        <button type="button" className={shoppingMode ? "mode-toggle active" : "mode-toggle"} aria-pressed={shoppingMode} onClick={() => { setShoppingMode(!shoppingMode); if (!shoppingMode) setShowDone(false); }}>{shoppingMode ? t("Ativo") : t("Ativar")}</button>
+        <button type="button" className={shoppingMode ? "mode-toggle active" : "mode-toggle"} aria-pressed={shoppingMode} onClick={() => { setShoppingMode(!shoppingMode); setShowDone(false); }}>{shoppingMode ? "Sair" : t("Ativar")}</button>
       </div>
+      {shoppingMode && <section className="supermarket-summary" aria-label="Progresso das compras">
+        <div className="supermarket-summary-top"><div><span className="supermarket-kicker">AS TUAS COMPRAS</span><h2>{doneItems.length === items.length && items.length > 0 ? "Tudo comprado!" : "Vamos às compras"}</h2></div><strong>{doneItems.length}<span> / {items.length}</span></strong></div>
+        <div className="supermarket-progress-track"><span style={{width: `${shoppingProgress}%`}}/></div>
+        <div className="supermarket-summary-bottom"><span>{doneItems.length} de {items.length} produtos verificados</span><button type="button" className={showDone ? "purchased-filter active" : "purchased-filter"} onClick={() => setShowDone(!showDone)}>{showDone ? "Ver por comprar" : `Comprados (${doneItems.length})`}</button></div>
+      </section>}
       <nav className="category-tabs" aria-label={t("Filtrar por categoria")} tabIndex={0}>
         {CATEGORIES.map(c => <button key={c.id} className={filter === c.id ? "category-tab active" : "category-tab"} onClick={() => setFilter(c.id)}><span>{c.emoji}</span>{t(c.label)}{c.id === "all" && <span className="tab-count">{activeItems.length}</span>}</button>)}
       </nav>
-      <section className="items-section">
-        <div className="section-heading"><div><h2>{shoppingMode ? t("A tua compra") : showDone ? t("Já comprados") : t("Falta comprar")}</h2><span>{visibleItems.length} {visibleItems.length === 1 ? t("artigo") : t("artigos")}</span></div>{!shoppingMode && <button className="view-toggle" onClick={() => setShowDone(!showDone)}>{showDone ? t("Ver por comprar") : `${t("Ver comprados")} (${doneItems.length})`} <ChevronDown size={15} className={showDone ? "rotate" : ""}/></button>}</div>
+      <section className={shoppingMode ? "items-section supermarket-items-section" : "items-section"}>
+        <div className="section-heading"><div><h2>{shoppingMode ? (showDone ? "Comprados" : "Por comprar") : showDone ? t("Já comprados") : t("Falta comprar")}</h2><span>{visibleItems.length} {visibleItems.length === 1 ? t("artigo") : t("artigos")}</span></div>{!shoppingMode && <button className="view-toggle" onClick={() => setShowDone(!showDone)}>{showDone ? t("Ver por comprar") : `${t("Ver comprados")} (${doneItems.length})`} <ChevronDown size={15} className={showDone ? "rotate" : ""}/></button>}</div>
         {visibleItems.length === 0 ? <div className="empty-state"><span className="empty-illustration">{showDone ? "✨" : "🧺"}</span><h3>{showDone ? t("Ainda não há compras concluídas") : filter === "all" ? t("A lista está vazia") : t("Nada nesta categoria")}</h3><p>{showDone ? t("Quando marcares um artigo como comprado, aparece aqui.") : t("Adiciona o primeiro artigo no campo acima.")}</p></div> : (
           <div className={shoppingMode ? "items-list supermarket-list" : "items-list"}>{(shoppingMode && filter === "all" ? [...visibleItems].sort((a, b) => CATEGORIES.findIndex(cat => cat.id === a.category) - CATEGORIES.findIndex(cat => cat.id === b.category)) : visibleItems).map(item => {
             const cat = CATEGORIES.find(c => c.id === item.category) || CATEGORIES[5];
@@ -718,14 +726,14 @@ export default function App() {
             </article>;
           })}</div>
         )}
-        {doneItems.length > 0 && !showDone && <button className="clear-done" onClick={clearDone}><CheckCheck size={16}/> {t("Limpar artigos comprados")}</button>}
-        {items.length > 0 && <button type="button" className="clear-all-items" onClick={clearAllItems}><Trash2 size={16}/> {t("Remover todos os produtos")}</button>}
+        {doneItems.length > 0 && !showDone && !shoppingMode && <button className="clear-done" onClick={clearDone}><CheckCheck size={16}/> {t("Limpar artigos comprados")}</button>}
+        {items.length > 0 && !shoppingMode && <button type="button" className="clear-all-items" onClick={clearAllItems}><Trash2 size={16}/> {t("Remover todos os produtos")}</button>}
       </section>
-      <div className="purchased-dock">
+      {!shoppingMode && <div className="purchased-dock">
         <button type="button" className={showDone ? "purchased-dock-button active" : "purchased-dock-button"} onClick={() => { setShowDone(!showDone); document.querySelector(".items-section")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>
           <span>{showDone ? t("Ver por comprar") : t("Ver comprados")} ({doneItems.length})</span><ChevronDown size={19} className={showDone ? "dock-chevron rotated" : "dock-chevron"}/>
         </button>
-      </div>
+      </div>}
       </>}
       {activeTab === "receipts" && <section className="receipts-section">
         <div className="receipts-heading"><div><span className="eyebrow">ARQUIVO PARTILHADO</span><h1>{t("Faturas de compras")}</h1><p>{t("Comprovativos acessíveis a todos os membros desta lista.")}</p></div></div>
