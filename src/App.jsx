@@ -94,6 +94,7 @@ export default function App() {
   const [receiptBusy, setReceiptBusy] = useState(false);
   const [receiptExtractBusy, setReceiptExtractBusy] = useState(false);
   const [receiptExtraction, setReceiptExtraction] = useState(null);
+  const [receiptNeedsName, setReceiptNeedsName] = useState(false);
   const channelRef = useRef(null);
   const [list, setList] = useState(null);
   const displayListName = list && ["Compras da família", "Family shopping", "Compra familiar"].includes(list.name) ? t("Compras da família") : list?.name;
@@ -541,6 +542,12 @@ export default function App() {
   async function addReceipt(e) {
     e.preventDefault();
     if (!receiptStore.trim() || receiptTotal === "" || Number(receiptTotal) < 0) return;
+    if (!memberName.trim()) {
+      setReceiptNeedsName(true);
+      setError("");
+      window.setTimeout(() => document.getElementById("receipt-member-name")?.focus(), 0);
+      return;
+    }
     setReceiptBusy(true); setError("");
     let filePath = null;
     try {
@@ -714,6 +721,7 @@ export default function App() {
         <div className="receipts-heading"><div><span className="eyebrow">ARQUIVO PARTILHADO</span><h1>{t("Faturas de compras")}</h1><p>{t("Comprovativos acessíveis a todos os membros desta lista.")}</p></div></div>
         <form className="receipt-form" onSubmit={addReceipt}>
           <h2><Upload size={18}/> Adicionar fatura</h2>
+          {receiptNeedsName && !memberName.trim() && <div className="receipt-name-prompt"><strong>Antes de guardar, como te devemos identificar?</strong><label htmlFor="receipt-member-name">O teu nome</label><input id="receipt-member-name" value={memberNameInput} onChange={e => setMemberNameInput(e.target.value)} placeholder="Ex.: Ana" maxLength={60} autoComplete="name" required/><small>O nome ficará associado às faturas que adicionares nesta lista.</small><button type="button" className="secondary-button" disabled={!memberNameInput.trim()} onClick={() => { const displayName = memberNameInput.trim().slice(0,60); localStorage.setItem("listora-member-name", displayName); setMemberName(displayName); setReceiptNeedsName(false); setError(""); }}>Guardar nome e continuar</button></div>}
           <label htmlFor="receipt-store">{t("Supermercado")}</label><input id="receipt-store" value={receiptStore} onChange={e => setReceiptStore(e.target.value)} placeholder="Ex.: Continente, Lidl, Pingo Doce" maxLength={120} required/>
           <div className="receipt-form-grid"><div><label htmlFor="receipt-date">{t("Data da compra")}</label><input id="receipt-date" type="date" value={receiptDate} onChange={e => setReceiptDate(e.target.value)} required/></div><div><label htmlFor="receipt-total">{t("Total (€)")}</label><input id="receipt-total" type="number" min="0" step="0.01" value={receiptTotal} onChange={e => setReceiptTotal(e.target.value)} placeholder="0,00" required/></div></div>
           <label htmlFor="receipt-notes">{t("Notas (opcional")}</label><textarea id="receipt-notes" value={receiptNotes} onChange={e => setReceiptNotes(e.target.value)} maxLength={1000} placeholder="Ex.: compras da semana, IVA, descontos…"/>
