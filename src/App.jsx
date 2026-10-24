@@ -496,23 +496,23 @@ export default function App() {
     }
   }
 
-  async function extractReceiptData() {
-    if (!receiptFile) { setError("Seleciona primeiro uma fotografia ou PDF da fatura."); return; }
-    if (!["image/jpeg","image/png","image/webp","application/pdf"].includes(receiptFile.type)) {
+  async function extractReceiptData(file = receiptFile) {
+    if (!file) { setError("Seleciona primeiro uma fotografia ou PDF da fatura."); return; }
+    if (!["image/jpeg","image/png","image/webp","application/pdf"].includes(file.type)) {
       setError("Usa uma imagem JPG, PNG, WebP ou PDF."); return;
     }
-    if (receiptFile.size > 10 * 1024 * 1024) { setError("O comprovativo deve ter no máximo 10 MB."); return; }
+    if (file.size > 10 * 1024 * 1024) { setError("O comprovativo deve ter no máximo 10 MB."); return; }
     setReceiptExtractBusy(true); setError(""); setReceiptExtraction(null);
     try {
       const dataUrl = await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(String(reader.result));
         reader.onerror = () => reject(new Error("Não foi possível ler o ficheiro."));
-        reader.readAsDataURL(receiptFile);
+        reader.readAsDataURL(file);
       });
       const base64 = dataUrl.split(",")[1];
       const { data, error: invokeError } = await supabase.functions.invoke("listora-receipt-extract", {
-        body: { mimeType: receiptFile.type, fileData: base64 }
+        body: { mimeType: file.type, fileData: base64 }
       });
       if (invokeError) {
         const detail = await invokeError.context?.json?.().catch(() => null);
@@ -717,8 +717,8 @@ export default function App() {
           <label htmlFor="receipt-store">{t("Supermercado")}</label><input id="receipt-store" value={receiptStore} onChange={e => setReceiptStore(e.target.value)} placeholder="Ex.: Continente, Lidl, Pingo Doce" maxLength={120} required/>
           <div className="receipt-form-grid"><div><label htmlFor="receipt-date">{t("Data da compra")}</label><input id="receipt-date" type="date" value={receiptDate} onChange={e => setReceiptDate(e.target.value)} required/></div><div><label htmlFor="receipt-total">{t("Total (€)")}</label><input id="receipt-total" type="number" min="0" step="0.01" value={receiptTotal} onChange={e => setReceiptTotal(e.target.value)} placeholder="0,00" required/></div></div>
           <label htmlFor="receipt-notes">{t("Notas (opcional")}</label><textarea id="receipt-notes" value={receiptNotes} onChange={e => setReceiptNotes(e.target.value)} maxLength={1000} placeholder="Ex.: compras da semana, IVA, descontos…"/>
-          <label className="receipt-file-label" htmlFor="receipt-file"><FileText size={17}/><span>{receiptFile ? receiptFile.name : "Anexar fotografia ou PDF"}</span><small>{t("Máx. 10 MB")}</small></label><input className="receipt-file-input" id="receipt-file" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={e => { setReceiptFile(e.target.files?.[0] || null); setReceiptExtraction(null); }}/>
-          <button className="secondary-button receipt-extract-button" type="button" onClick={extractReceiptData} disabled={!receiptFile || receiptExtractBusy || receiptBusy}>{receiptExtractBusy ? <><LoaderCircle size={16} className="spin"/> A analisar fatura…</> : <><Receipt size={16}/> Sugerir dados com IA</>}</button>
+          <label className="receipt-file-label" htmlFor="receipt-file"><FileText size={17}/><span>{receiptFile ? receiptFile.name : "Anexar fotografia ou PDF"}</span><small>{t("Máx. 10 MB")}</small></label><input className="receipt-file-input" id="receipt-file" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={e => { const file = e.target.files?.[0] || null; setReceiptFile(file); setReceiptExtraction(null); if (file) void extractReceiptData(file); }}/>
+          {receiptExtractBusy && <p className="receipt-ai-hint receipt-ai-progress"><LoaderCircle size={16} className="spin"/> A analisar a fatura automaticamente…</p>}
           <p className="receipt-ai-hint">A IA tenta identificar o supermercado, a data, o total, o IVA e os artigos. Revê sempre as sugestões antes de guardar.</p>
           {receiptExtraction && <div className="receipt-extraction-preview" role="status">
             <strong><Check size={16}/> Sugestões extraídas — confirma os campos acima</strong>
