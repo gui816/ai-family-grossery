@@ -60,7 +60,7 @@ function LanguagePicker({ language, onChange }) {
 
 function getDeviceId() { let id = localStorage.getItem("listora-device-id"); if (!id) { id = crypto.randomUUID ? crypto.randomUUID() : "device-" + Date.now() + "-" + Math.random().toString(36).slice(2); localStorage.setItem("listora-device-id", id); } return id; }
 
-function getDeviceId() { let id = localStorage.getItem("listora-device-id"); if (!id) { id = crypto.randomUUID ? crypto.randomUUID() : "device-" + Date.now() + "-" + Math.random().toString(36).slice(2); localStorage.setItem("listora-device-id", id); } return id; }
+
 
 export default function App() {
   const [language, setLanguage] = useState(() => {
