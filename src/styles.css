@@ -247,3 +247,9 @@
  .share-modal>.primary-button,.share-modal>.secondary-button{min-height:48px;margin-bottom:8px;}
  .share-note{margin-bottom:0!important;}
 }
+
+
+/* Keep the language picker available in the app header on mobile */
+.refined-topbar .language-picker{flex:0 0 auto;max-width:108px;min-height:38px}
+.refined-topbar .language-picker select{max-width:76px}
+@media(max-width:390px){.refined-topbar .topbar-actions{gap:4px}.refined-topbar .language-picker{max-width:94px;padding:5px}.refined-topbar .language-picker select{max-width:62px;font-size:9px}.refined-topbar .icon-action{width:34px}}
