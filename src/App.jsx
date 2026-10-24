@@ -260,37 +260,26 @@ export default function App() {
   }
 
   async function callGemini({ text, image }) {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    if (!apiKey) throw new Error("A importação inteligente por voz ou fotografia ainda não está disponível nesta versão web. Estamos a preparar a ligação segura ao serviço de IA.");
-    const prompt = [
-      "You extract shopping-list items. Return ONLY valid JSON in this exact shape: {\"items\":[{\"name\":\"product name\",\"quantity\":1}]}.",
-      "Identify only purchasable product names and quantities explicitly stated or clearly written. Do not invent products, brands, units, prices, headings, notes, or recipes.",
-      "If no quantity is present, use quantity 1. Quantity must be an integer from 1 to 999.",
-      "Preserve the language of each product and use concise product names. Merge obvious duplicate mentions by adding quantities.",
-      "If text/image is unclear, omit uncertain entries. Maximum 60 items.",
-      text ? "Shopping list dictated by the user: " + text : "Read the handwritten or printed shopping list in the attached image."
-    ].join("\n");
-    const parts = [{ text: prompt }];
-    if (image) parts.push({ inlineData: { mimeType: image.mimeType, data: image.data } });
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts }],
-        generationConfig: { responseMimeType: "application/json", responseSchema: {
-          type: "OBJECT", properties: { items: { type: "ARRAY", maxItems: 60, items: {
-            type: "OBJECT", properties: { name: { type: "STRING" }, quantity: { type: "INTEGER" } },
-            required: ["name", "quantity"], propertyOrdering: ["name", "quantity"]
-          }}}, required: ["items"], propertyOrdering: ["items"]
-        }, temperature: 0.1 }
-      })
+    const { data, error } = await supabase.functions.invoke("listora-list-extract", {
+      body: {
+        text: text || "",
+        mimeType: image?.mimeType || "",
+        fileData: image?.data || ""
+      }
     });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      const detail = payload?.error?.message;
-      throw new Error(detail || `Erro na API Gemini (${response.status}). Confirma a chave e o acesso ao modelo.`);
+    if (error) {
+      let detail = error.message || "Não foi possível contactar o serviço de IA.";
+      try {
+        const context = error.context;
+        if (context && typeof context.json === "function") {
+          const payload = await context.json();
+          detail = payload?.error || payload?.message || detail;
+        }
+      } catch { /* Keep the original function error. */ }
+      throw new Error(detail);
     }
-    return parseGeminiItems(payload);
+    if (data?.error) throw new Error(data.error);
+    return parseGeminiItems({ candidates: [{ content: { parts: [{ text: JSON.stringify(data) }] } }] });
   }
 
   async function processPhoto(file) {
