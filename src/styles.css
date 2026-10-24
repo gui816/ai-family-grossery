@@ -326,3 +326,5 @@
 .supermarket-items-section .shopping-item{min-height:74px}
 .supermarket-items-section .check-button{width:32px;height:32px;flex-basis:32px}
 .supermarket-items-section .clear-all-items,.supermarket-items-section .clear-done{display:none}
+
+.add-panel[hidden],.quick-actions[hidden]{display:none!important}
