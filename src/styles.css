@@ -229,3 +229,21 @@
 .invite-qr svg{image-rendering:pixelated}
 .share-modal>.primary-button{margin:0 0 8px}
 .share-modal>.secondary-button{margin-top:0}
+
+
+/* Mobile dialog fit: keep every share action reachable on short screens */
+.modal-backdrop{overflow-y:auto;overscroll-behavior:contain}
+@media(max-width:600px), (max-height:700px){
+ .modal-backdrop{place-items:start center;padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));}
+ .share-modal,.import-modal{width:min(100%,420px);max-height:calc(100dvh - max(24px,env(safe-area-inset-top) + env(safe-area-inset-bottom) + 24px));overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:24px 18px 18px;}
+ .share-modal .modal-close{position:sticky;float:right;top:0;right:auto;margin:-7px -3px 0 8px;z-index:2;}
+ .share-modal .share-graphic{clear:both;margin:0 auto 12px;width:48px;height:48px;border-radius:15px;}
+ .share-modal h2{font-size:19px;line-height:1.25;}
+ .share-modal>p{font-size:12px;line-height:1.5;margin-bottom:13px;}
+ .invite-qr{padding:12px;margin:0 0 10px;gap:8px;}
+ .invite-qr svg{width:min(100%,208px);height:auto;}
+ .share-code-box{padding:11px;margin-bottom:10px;}
+ .share-code-box strong{font-size:clamp(19px,6vw,25px);letter-spacing:clamp(2px,1vw,5px);overflow-wrap:anywhere;}
+ .share-modal>.primary-button,.share-modal>.secondary-button{min-height:48px;margin-bottom:8px;}
+ .share-note{margin-bottom:0!important;}
+}
