@@ -85,6 +85,8 @@ export default function App() {
   const [receiptNotes, setReceiptNotes] = useState("");
   const [receiptFile, setReceiptFile] = useState(null);
   const [receiptBusy, setReceiptBusy] = useState(false);
+  const [receiptExtractBusy, setReceiptExtractBusy] = useState(false);
+  const [receiptExtraction, setReceiptExtraction] = useState(null);
   const channelRef = useRef(null);
   const [list, setList] = useState(null);
   const displayListName = list && ["Compras da família", "Family shopping", "Compra familiar"].includes(list.name) ? t("Compras da família") : list?.name;
@@ -485,6 +487,48 @@ export default function App() {
     }
   }
 
+  async function extractReceiptData() {
+    if (!receiptFile) { setError("Seleciona primeiro uma fotografia ou PDF da fatura."); return; }
+    if (!["image/jpeg","image/png","image/webp","application/pdf"].includes(receiptFile.type)) {
+      setError("Usa uma imagem JPG, PNG, WebP ou PDF."); return;
+    }
+    if (receiptFile.size > 10 * 1024 * 1024) { setError("O comprovativo deve ter no máximo 10 MB."); return; }
+    setReceiptExtractBusy(true); setError(""); setReceiptExtraction(null);
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error("Não foi possível ler o ficheiro."));
+        reader.readAsDataURL(receiptFile);
+      });
+      const base64 = dataUrl.split(",")[1];
+      const { data, error: invokeError } = await supabase.functions.invoke("listora-receipt-extract", {
+        body: { mimeType: receiptFile.type, fileData: base64 }
+      });
+      if (invokeError) {
+        const detail = await invokeError.context?.json?.().catch(() => null);
+        throw new Error(detail?.error || invokeError.message || "Não foi possível analisar a fatura.");
+      }
+      if (!data || data.error) throw new Error(data?.error || "A IA não conseguiu analisar esta fatura.");
+      if (data.storeName) setReceiptStore(String(data.storeName).slice(0,120));
+      if (data.purchasedAt && /^\\d{4}-\\d{2}-\\d{2}$/.test(data.purchasedAt)) setReceiptDate(data.purchasedAt);
+      if (data.total !== null && data.total !== undefined && Number.isFinite(Number(data.total))) setReceiptTotal(String(Number(data.total).toFixed(2)));
+      const items = Array.isArray(data.items) ? data.items.slice(0,40) : [];
+      const detailLines = [];
+      if (data.vatTotal !== null && data.vatTotal !== undefined && Number.isFinite(Number(data.vatTotal))) detailLines.push("IVA identificado: €" + Number(data.vatTotal).toFixed(2));
+      if (items.length) detailLines.push("Artigos identificados: " + items.map(item => {
+        const label = String(item.name || "").trim().slice(0,100);
+        const amount = Number(item.total);
+        return label + (Number.isFinite(amount) ? " (€" + amount.toFixed(2) + ")" : "");
+      }).filter(Boolean).join(", "));
+      if (detailLines.length) setReceiptNotes(previous => [previous.trim(), detailLines.join("\\n")].filter(Boolean).join("\\n").slice(0,1000));
+      setReceiptExtraction({ items, vatTotal: data.vatTotal, confidence: data.confidence || "medium", warnings: Array.isArray(data.warnings) ? data.warnings : [] });
+      notify("Sugestões extraídas. Confirma os campos antes de guardar.");
+    } catch (err) {
+      setError(err.message || "Não foi possível extrair os dados da fatura.");
+    } finally { setReceiptExtractBusy(false); }
+  }
+
   async function addReceipt(e) {
     e.preventDefault();
     if (!receiptStore.trim() || receiptTotal === "" || Number(receiptTotal) < 0) return;
@@ -506,7 +550,7 @@ export default function App() {
       });
       if (rpcError) throw rpcError;
       setReceipts(data.receipts || []); setList(data.list || list); broadcastChange();
-      setReceiptStore(""); setReceiptTotal(""); setReceiptNotes(""); setReceiptFile(null);
+      setReceiptStore(""); setReceiptTotal(""); setReceiptNotes(""); setReceiptFile(null); setReceiptExtraction(null);
       const input = document.getElementById("receipt-file"); if (input) input.value = "";
       notify("Fatura adicionada à lista partilhada.");
     } catch (err) {
@@ -655,7 +699,15 @@ export default function App() {
           <label htmlFor="receipt-store">Supermercado</label><input id="receipt-store" value={receiptStore} onChange={e => setReceiptStore(e.target.value)} placeholder="Ex.: Continente, Lidl, Pingo Doce" maxLength={120} required/>
           <div className="receipt-form-grid"><div><label htmlFor="receipt-date">Data da compra</label><input id="receipt-date" type="date" value={receiptDate} onChange={e => setReceiptDate(e.target.value)} required/></div><div><label htmlFor="receipt-total">Total (€)</label><input id="receipt-total" type="number" min="0" step="0.01" value={receiptTotal} onChange={e => setReceiptTotal(e.target.value)} placeholder="0,00" required/></div></div>
           <label htmlFor="receipt-notes">Notas (opcional)</label><textarea id="receipt-notes" value={receiptNotes} onChange={e => setReceiptNotes(e.target.value)} maxLength={1000} placeholder="Ex.: compras da semana, IVA, descontos…"/>
-          <label className="receipt-file-label" htmlFor="receipt-file"><FileText size={17}/><span>{receiptFile ? receiptFile.name : "Anexar fotografia ou PDF"}</span><small>Máx. 10 MB</small></label><input className="receipt-file-input" id="receipt-file" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={e => setReceiptFile(e.target.files?.[0] || null)}/>
+          <label className="receipt-file-label" htmlFor="receipt-file"><FileText size={17}/><span>{receiptFile ? receiptFile.name : "Anexar fotografia ou PDF"}</span><small>Máx. 10 MB</small></label><input className="receipt-file-input" id="receipt-file" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={e => { setReceiptFile(e.target.files?.[0] || null); setReceiptExtraction(null); }}/>
+          <button className="secondary-button receipt-extract-button" type="button" onClick={extractReceiptData} disabled={!receiptFile || receiptExtractBusy || receiptBusy}>{receiptExtractBusy ? <><LoaderCircle size={16} className="spin"/> A analisar fatura…</> : <><Receipt size={16}/> Sugerir dados com IA</>}</button>
+          <p className="receipt-ai-hint">A IA tenta identificar o supermercado, a data, o total, o IVA e os artigos. Revê sempre as sugestões antes de guardar.</p>
+          {receiptExtraction && <div className="receipt-extraction-preview" role="status">
+            <strong><Check size={16}/> Sugestões extraídas — confirma os campos acima</strong>
+            {receiptExtraction.vatTotal !== null && receiptExtraction.vatTotal !== undefined && <span>IVA identificado: €{Number(receiptExtraction.vatTotal).toFixed(2)}</span>}
+            {receiptExtraction.items.length > 0 && <div><span>Artigos identificados ({receiptExtraction.items.length})</span><ul>{receiptExtraction.items.slice(0,12).map((item,index) => <li key={index}>{item.name}{Number.isFinite(Number(item.total)) ? " — €"+Number(item.total).toFixed(2) : ""}</li>)}</ul>{receiptExtraction.items.length > 12 && <small>Mais {receiptExtraction.items.length - 12} artigos incluídos nas notas.</small>}</div>}
+            {receiptExtraction.warnings.map((warning,index) => <small key={index}>{warning}</small>)}
+          </div>}
           <button className="primary-button" type="submit" disabled={receiptBusy}>{receiptBusy ? <LoaderCircle size={17} className="spin"/> : <Plus size={17}/>} Guardar fatura</button>
         </form>
         <div className="receipt-list-heading"><h2>Faturas partilhadas</h2><span>{receipts.length} {receipts.length === 1 ? "fatura" : "faturas"}</span></div>
