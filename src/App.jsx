@@ -50,11 +50,17 @@ function tx(text, lang) {
   if (!lang || lang === "pt-PT") return text;
   return EXTRA_I18N[lang]?.[text] || I18N[lang]?.[text] || I18N.en[text] || text;
 }
+const LANGUAGE_FLAGS = {
+  "pt-PT": "🇵🇹", en: "🇬🇧", es: "🇪🇸", fr: "🇫🇷", de: "🇩🇪",
+  it: "🇮🇹", nl: "🇳🇱", pl: "🇵🇱", ro: "🇷🇴", "zh-CN": "🇨🇳"
+};
+
 function LanguagePicker({ language, onChange }) {
+  const selectedLanguage = LANGUAGE_OPTIONS.find(([code]) => code === language);
   return <label className="language-picker" aria-label="Idioma">
-    <span aria-hidden="true">🌐</span>
-    <select value={language} onChange={e => onChange(e.target.value)} aria-label="Idioma">
-      {LANGUAGE_OPTIONS.map(([code, label]) => <option key={code} value={code}>{label}</option>)}
+    <span className="language-flag" aria-hidden="true">{LANGUAGE_FLAGS[language] || "🌐"}</span>
+    <select value={language} onChange={e => onChange(e.target.value)} aria-label="Idioma" title={selectedLanguage?.[1] || "Idioma"}>
+      {LANGUAGE_OPTIONS.map(([code, label]) => <option key={code} value={code}>{LANGUAGE_FLAGS[code]} {label}</option>)}
     </select>
   </label>;
 }
