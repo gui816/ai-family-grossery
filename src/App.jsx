@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { supabase, isSupabaseConfigured } from "./lib/supabase.js";
 import {
   ArrowRight, Check, CheckCheck, ChevronDown, CircleHelp, Clipboard, Copy, Share2, Repeat2,
@@ -57,7 +58,11 @@ function LanguagePicker({ language, onChange }) {
   </label>;
 }
 
-function getDeviceId() { let id = localStorage.getItem("listora-device-id"); if (!id) { id = crypto.randomUUID ? crypto.randomUUID() : "device-" + Date.now() + "-" + Math.random().toString(36).slice(2); localStorage.setItem("listora-device-id", id); } return id; }\n\nexport default function App() {
+function getDeviceId() { let id = localStorage.getItem("listora-device-id"); if (!id) { id = crypto.randomUUID ? crypto.randomUUID() : "device-" + Date.now() + "-" + Math.random().toString(36).slice(2); localStorage.setItem("listora-device-id", id); } return id; }
+
+function getDeviceId() { let id = localStorage.getItem("listora-device-id"); if (!id) { id = crypto.randomUUID ? crypto.randomUUID() : "device-" + Date.now() + "-" + Math.random().toString(36).slice(2); localStorage.setItem("listora-device-id", id); } return id; }
+
+export default function App() {
   const [language, setLanguage] = useState(() => {
     const saved = localStorage.getItem("lista-familia-language");
     if (saved && LANGUAGE_OPTIONS.some(([code]) => code === saved)) return saved;
@@ -68,7 +73,18 @@ function getDeviceId() { let id = localStorage.getItem("listora-device-id"); if 
   const t = text => tx(text, language);
   useEffect(() => { localStorage.setItem("lista-familia-language", language); }, [language]);
 
-  const [listCode, setListCode] = useState(() => (new URLSearchParams(window.location.search).get("join") || new URLSearchParams(window.location.search).get("list") || localStorage.getItem("lista-familia-code") || "").toUpperCase());\n  const [memberName, setMemberName] = useState(() => localStorage.getItem("listora-member-name") || "");\n  const [memberNameInput, setMemberNameInput] = useState(() => localStorage.getItem("listora-member-name") || "");\n  const [memberId, setMemberId] = useState(() => getDeviceId());\n  const [activeTab, setActiveTab] = useState("shopping");\n  const [receipts, setReceipts] = useState([]);\n  const [receiptStore, setReceiptStore] = useState("");\n  const [receiptDate, setReceiptDate] = useState(new Date().toISOString().slice(0,10));\n  const [receiptTotal, setReceiptTotal] = useState("");\n  const [receiptNotes, setReceiptNotes] = useState("");\n  const [receiptFile, setReceiptFile] = useState(null);\n  const [receiptBusy, setReceiptBusy] = useState(false);
+  const [listCode, setListCode] = useState(() => (new URLSearchParams(window.location.search).get("join") || new URLSearchParams(window.location.search).get("list") || localStorage.getItem("lista-familia-code") || "").toUpperCase());
+  const [memberName, setMemberName] = useState(() => localStorage.getItem("listora-member-name") || "");
+  const [memberNameInput, setMemberNameInput] = useState(() => localStorage.getItem("listora-member-name") || "");
+  const [memberId, setMemberId] = useState(() => getDeviceId());
+  const [activeTab, setActiveTab] = useState("shopping");
+  const [receipts, setReceipts] = useState([]);
+  const [receiptStore, setReceiptStore] = useState("");
+  const [receiptDate, setReceiptDate] = useState(new Date().toISOString().slice(0,10));
+  const [receiptTotal, setReceiptTotal] = useState("");
+  const [receiptNotes, setReceiptNotes] = useState("");
+  const [receiptFile, setReceiptFile] = useState(null);
+  const [receiptBusy, setReceiptBusy] = useState(false);
   const channelRef = useRef(null);
   const [list, setList] = useState(null);
   const displayListName = list && ["Compras da família", "Family shopping", "Compra familiar"].includes(list.name) ? t("Compras da família") : list?.name;
@@ -163,6 +179,9 @@ function getDeviceId() { let id = localStorage.getItem("listora-device-id"); if 
 
   async function createList(e) {
     e?.preventDefault();
+    const displayName = memberNameInput.trim().slice(0, 60);
+    if (!displayName) { setError("Indica o teu nome para poderes criar a lista."); return; }
+    localStorage.setItem("listora-member-name", displayName); setMemberName(displayName);
     setLoading(true); setError("");
     try {
       const { data, error: rpcError } = await supabase.rpc("create_family_list", { p_name: listName.trim() || t("Compras da família") });
@@ -170,21 +189,30 @@ function getDeviceId() { let id = localStorage.getItem("listora-device-id"); if 
       localStorage.setItem("lista-familia-code", data.list.shareCode);
       setListCode(data.list.shareCode);
       setList(data.list);
-      setItems([]);
+      setItems(data.items || []); setReceipts(data.receipts || []);
+      const deviceId = getDeviceId(); setMemberId(deviceId);
+      const { error: memberError } = await supabase.rpc("register_family_member", { p_share_code: data.list.shareCode, p_device_id: deviceId, p_display_name: displayName });
+      if (memberError) throw memberError;
     } catch (err) { setError(err.message); }
     finally { setLoading(false); }
   }
 
   async function joinList(e) {
     e.preventDefault();
+    const displayName = memberNameInput.trim().slice(0, 60);
+    if (!displayName) { setError("Indica o teu nome para entrares na lista."); return; }
+    localStorage.setItem("listora-member-name", displayName); setMemberName(displayName);
     const code = joinCode.trim().toUpperCase();
     if (!code) return;
     setLoading(true); setError("");
     try {
       const { data, error: rpcError } = await supabase.rpc("get_family_list", { p_share_code: code });
       if (rpcError || !data?.list) throw rpcError || new Error("Lista não encontrada.");
+      const deviceId = getDeviceId(); setMemberId(deviceId);
+      const { error: memberError } = await supabase.rpc("register_family_member", { p_share_code: code, p_device_id: deviceId, p_display_name: displayName });
+      if (memberError) throw memberError;
       localStorage.setItem("lista-familia-code", code);
-      setListCode(code); setList(data.list); setItems(data.items || []);
+      setListCode(code); setList(data.list); setItems(data.items || []); setReceipts(data.receipts || []);
     } catch { setError(t("Não encontrámos essa lista. Confirma o código e tenta novamente.")); }
     finally { setLoading(false); }
   }
@@ -231,7 +259,8 @@ function getDeviceId() { let id = localStorage.getItem("listora-device-id"); if 
       "Preserve the language of each product and use concise product names. Merge obvious duplicate mentions by adding quantities.",
       "If text/image is unclear, omit uncertain entries. Maximum 60 items.",
       text ? "Shopping list dictated by the user: " + text : "Read the handwritten or printed shopping list in the attached image."
-    ].join("\n");
+    ].join("
+");
     const parts = [{ text: prompt }];
     if (image) parts.push({ inlineData: { mimeType: image.mimeType, data: image.data } });
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`, {
@@ -436,14 +465,15 @@ function getDeviceId() { let id = localStorage.getItem("listora-device-id"); if 
     } catch (err) { setError(err.message); }
   }
 
+  const inviteUrl = window.location.origin + (import.meta.env.BASE_URL || "/") + "?join=" + encodeURIComponent(listCode);
   async function shareListCode() {
-    const message = `${t("Código da lista")}: ${listCode}`;
+    const message = "Entra na minha lista da Listora: " + inviteUrl + " (código: " + listCode + ")";
     try {
       if (navigator.share) {
         await navigator.share({ title: "Listora — lista partilhada", text: message, url: inviteUrl });
       } else {
-        await navigator.clipboard.writeText(listCode);
-        notify(t("Código da lista copiado!"));
+        await navigator.clipboard.writeText(message);
+        notify(t("Link de convite copiado!"));
       }
     } catch (err) {
       if (err?.name === "AbortError") return;
@@ -461,7 +491,7 @@ function getDeviceId() { let id = localStorage.getItem("listora-device-id"); if 
       await navigator.clipboard.writeText(listCode);
       notify(t("Código da lista copiado!"));
     } catch {
-      window.prompt(t("Copia este código e partilha com a família:"), listCode);
+      window.prompt(t("Copia este link e partilha com a família:"), inviteUrl);
     }
   }
 
@@ -487,12 +517,14 @@ function getDeviceId() { let id = localStorage.getItem("listora-device-id"); if 
         <div className="welcome-card">
           <div className="card-heading"><span className="card-icon"><Plus size={19}/></span><div><h2>{t("Criar uma lista nova")}</h2><p>{t("Começa uma lista e convida a família.")}</p></div></div>
           <form onSubmit={createList} className="create-form">
+            <label htmlFor="member-name">O teu nome</label><input id="member-name" value={memberNameInput} onChange={e => setMemberNameInput(e.target.value)} maxLength={60} placeholder="Ex.: Guilherme" required autoComplete="name"/>
             <label htmlFor="list-name">{t("Nome da lista")}</label>
             <input id="list-name" value={listName} onChange={e => setListName(e.target.value)} maxLength={60} placeholder={t("Compras da família")}/>
             <button className="primary-button" disabled={loading} type="submit">{loading ? t("A criar…") : t("Criar lista")} <ArrowRight size={18}/></button>
           </form>
           <div className="form-divider"><span>{t("ou")}</span></div>
           <form onSubmit={joinList} className="join-form">
+            <label htmlFor="member-name-join">O teu nome</label><input id="member-name-join" value={memberNameInput} onChange={e => setMemberNameInput(e.target.value)} maxLength={60} placeholder="Ex.: Guilherme" required autoComplete="name"/>
             <label htmlFor="join-code">{t("Já tens um código de partilha?")}</label>
             <div className="join-row"><input id="join-code" value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase())} placeholder={t("Ex.: A3K9PX")} maxLength={12}/><button aria-label={t("Entrar na lista")} type="submit" className="join-button"><ArrowRight size={20}/></button></div>
           </form>
@@ -566,7 +598,7 @@ function getDeviceId() { let id = localStorage.getItem("listora-device-id"); if 
       </div>
       <footer className="app-footer"><span><Leaf size={15}/> {t("Menos esquecimentos, mais tempo juntos.")}</span><button onClick={() => { if (window.confirm(t("Sair desta lista neste dispositivo? A lista partilhada não será apagada."))) { localStorage.removeItem("lista-familia-code"); setListCode(""); setList(null); setItems([]); } }}>{t("Sair da lista")}</button></footer>
       {importPreview.length > 0 && <div className="modal-backdrop" onClick={() => !importBusy && setImportPreview([])}><section className="share-modal import-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="import-title"><button className="modal-close" onClick={() => !importBusy && setImportPreview([])} aria-label={t("Fechar")}><X size={20}/></button><div className="share-graphic"><ShoppingBasket size={28}/></div><h2 id="import-title">Confirmar produtos</h2><p>{importSource === "photo" ? "Revê os produtos reconhecidos na fotografia." : "Revê os produtos reconhecidos por voz."} Podes corrigir os nomes e quantidades antes de adicionar.</p><div className="import-preview-list">{importPreview.map((item, index) => <div className="import-preview-row" key={index}><input aria-label={`Produto ${index + 1}`} value={item.name} maxLength={100} onChange={e => editPreviewItem(index, { name: e.target.value })}/><input aria-label={`Quantidade de ${item.name}`} type="number" min="1" max="999" value={item.quantity} onChange={e => editPreviewItem(index, { quantity: e.target.value })}/><button type="button" aria-label={`Remover ${item.name}`} onClick={() => setImportPreview(previous => previous.filter((_, i) => i !== index))}><X size={17}/></button></div>)}</div>{importError && <p className="error-message">{importError}</p>}<button className="primary-button" disabled={importBusy || !importPreview.some(item => item.name.trim())} onClick={confirmImport}>{importBusy ? <LoaderCircle className="spin" size={17}/> : <Check size={17}/>} {importBusy ? "A adicionar…" : `Adicionar ${importPreview.length} produtos`}</button><button className="secondary-button" disabled={importBusy} onClick={() => setImportPreview([])}>Cancelar</button></section></div>}
-      {showShare && <div className="modal-backdrop" onClick={() => setShowShare(false)}><section className="share-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="share-title"><button className="modal-close" onClick={() => setShowShare(false)} aria-label={t("Fechar")}><X size={20}/></button><div className="share-graphic"><Users size={28}/></div><h2 id="share-title">{t("A lista é melhor em família")}</h2><p>{t("Partilha o código com a família. Cada pessoa introduz o código na app para abrir a mesma lista e sincronizar as alterações.")}</p><div className="invite-qr"><QRCodeSVG value={inviteUrl} size={184} level="M" includeMargin/><span>Digitaliza para entrar na lista</span></div><div className="share-code-box"><span>{t("CÓDIGO DA LISTA")}</span><strong>{list.shareCode}</strong></div><button className="primary-button" onClick={shareListCode}>{typeof navigator.share === "function" ? <Users size={17}/> : <Copy size={17}/>} {t(typeof navigator.share === "function" ? "Partilhar código" : "Copiar código")}</button>{typeof navigator.share === "function" && <button className="secondary-button" onClick={copyListCode}><Clipboard size={17}/> {t("Copiar apenas o código")}</button>}<p className="share-note"><CircleHelp size={14}/> {t("Qualquer pessoa com o código pode aceder à lista. Partilha apenas com pessoas de confiança.")}</p></section></div>}
+      {showShare && <div className="modal-backdrop" onClick={() => setShowShare(false)}><section className="share-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="share-title"><button className="modal-close" onClick={() => setShowShare(false)} aria-label={t("Fechar")}><X size={20}/></button><div className="share-graphic"><Users size={28}/></div><h2 id="share-title">{t("A lista é melhor em família")}</h2><p>{t("Partilha o código com a família. Cada pessoa introduz o código na app para abrir a mesma lista e sincronizar as alterações.")}</p><div className="invite-qr"><QRCodeSVG value={inviteUrl} size={184} level="M" includeMargin/><span>Digitaliza para entrar na lista</span></div><div className="invite-qr"><QRCodeSVG value={inviteUrl} size={184} level="M" includeMargin/><span>Digitaliza para entrar na lista</span></div><div className="share-code-box"><span>{t("CÓDIGO DA LISTA")}</span><strong>{list.shareCode}</strong></div><button className="primary-button" onClick={shareListCode}>{typeof navigator.share === "function" ? <Users size={17}/> : <Copy size={17}/>} {t(typeof navigator.share === "function" ? "Partilhar código" : "Copiar código")}</button>{typeof navigator.share === "function" && <button className="secondary-button" onClick={copyListCode}><Clipboard size={17}/> {t("Copiar apenas o código")}</button>}<p className="share-note"><CircleHelp size={14}/> {t("Qualquer pessoa com o código pode aceder à lista. Partilha apenas com pessoas de confiança.")}</p></section></div>}
       {toast && <div className="toast"><Check size={16}/>{toast}</div>}
       {error && <button className="error-toast" onClick={() => setError("")}>{error}<X size={15}/></button>}
     </main>
