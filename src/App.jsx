@@ -99,7 +99,7 @@ export default function App() {
   const [shoppingMode, setShoppingMode] = useState(false);
   const [templates, setTemplates] = useState(() => { try { return JSON.parse(localStorage.getItem("lista-familia-templates") || "[]"); } catch { return []; } });
   const [itemHistory, setItemHistory] = useState(() => { try { return JSON.parse(localStorage.getItem("lista-familia-item-history") || "[]"); } catch { return []; } });
-  const [joinCode, setJoinCode] = useState(() => (new URLSearchParams(window.location.search).get("join") || "").toUpperCase());
+  const [joinCode, setJoinCode] = useState(() => (new URLSearchParams(window.location.search).get("join") || localStorage.getItem("lista-familia-code") || "").toUpperCase());
   const [listName, setListName] = useState(() => tx("Compras da família", language));
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
