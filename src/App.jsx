@@ -259,8 +259,7 @@ export default function App() {
       "Preserve the language of each product and use concise product names. Merge obvious duplicate mentions by adding quantities.",
       "If text/image is unclear, omit uncertain entries. Maximum 60 items.",
       text ? "Shopping list dictated by the user: " + text : "Read the handwritten or printed shopping list in the attached image."
-    ].join("
-");
+    ].join("\n");
     const parts = [{ text: prompt }];
     if (image) parts.push({ inlineData: { mimeType: image.mimeType, data: image.data } });
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`, {
