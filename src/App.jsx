@@ -486,6 +486,53 @@ export default function App() {
     }
   }
 
+  async function addReceipt(e) {
+    e.preventDefault();
+    if (!receiptStore.trim() || receiptTotal === "" || Number(receiptTotal) < 0) return;
+    setReceiptBusy(true); setError("");
+    let filePath = null;
+    try {
+      const receiptId = crypto.randomUUID();
+      if (receiptFile) {
+        if (receiptFile.size > 10 * 1024 * 1024) throw new Error("O comprovativo deve ter no máximo 10 MB.");
+        if (!["image/jpeg","image/png","image/webp","application/pdf"].includes(receiptFile.type)) throw new Error("Usa uma imagem JPG, PNG, WebP ou PDF.");
+        filePath = listCode + "/" + receiptId + "/" + receiptFile.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+        const { error: uploadError } = await supabase.storage.from("family-receipts").upload(filePath, receiptFile, { contentType: receiptFile.type, upsert: false });
+        if (uploadError) throw uploadError;
+      }
+      const { data, error: rpcError } = await supabase.rpc("add_family_receipt", {
+        p_share_code: listCode, p_device_id: memberId, p_store_name: receiptStore.trim(),
+        p_purchased_at: receiptDate, p_total: Number(receiptTotal), p_notes: receiptNotes.trim(),
+        p_file_path: filePath, p_file_name: receiptFile?.name || null
+      });
+      if (rpcError) throw rpcError;
+      setReceipts(data.receipts || []); setList(data.list || list); broadcastChange();
+      setReceiptStore(""); setReceiptTotal(""); setReceiptNotes(""); setReceiptFile(null);
+      const input = document.getElementById("receipt-file"); if (input) input.value = "";
+      notify("Fatura adicionada à lista partilhada.");
+    } catch (err) {
+      if (filePath) await supabase.storage.from("family-receipts").remove([filePath]);
+      setError(err.message || "Não foi possível guardar a fatura.");
+    } finally { setReceiptBusy(false); }
+  }
+
+  async function openReceipt(receipt) {
+    if (!receipt.filePath) return;
+    const { data, error: fileError } = await supabase.storage.from("family-receipts").createSignedUrl(receipt.filePath, 300);
+    if (fileError) { setError(fileError.message); return; }
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  }
+
+  async function removeReceipt(receipt) {
+    if (!window.confirm("Apagar esta fatura partilhada?")) return;
+    try {
+      const { data, error: rpcError } = await supabase.rpc("delete_family_receipt", { p_share_code: listCode, p_receipt_id: receipt.id });
+      if (rpcError) throw rpcError;
+      if (data.filePath) await supabase.storage.from("family-receipts").remove([data.filePath]);
+      setReceipts(data.payload?.receipts || []); broadcastChange();
+    } catch (err) { setError(err.message); }
+  }
+
   async function copyListCode() {
     try {
       await navigator.clipboard.writeText(listCode);
@@ -548,6 +595,11 @@ export default function App() {
           <button className="icon-action" onClick={() => { if (doneItems.length) repeatItem(doneItems[0].name); else document.querySelector(".add-main input")?.focus(); }} aria-label={t("Repetir compras")} title={t("Repetir compras")}><Repeat2 size={22}/></button>
         </div>
       </header>
+      <nav className="main-tabs" aria-label="Secções da lista">
+        <button type="button" className={activeTab === "shopping" ? "main-tab active" : "main-tab"} onClick={() => setActiveTab("shopping")}><ShoppingBasket size={17}/> Lista de compras</button>
+        <button type="button" className={activeTab === "receipts" ? "main-tab active" : "main-tab"} onClick={() => setActiveTab("receipts")}><Receipt size={17}/> Faturas <span>{receipts.length}</span></button>
+      </nav>
+      {activeTab === "shopping" && <>
       <section className="list-header">
         <div className="list-title-line"><div><div className="eyebrow">{t("A LISTA DA CASA")}</div><h1>{displayListName}</h1></div><span className={`sync-status ${connected ? "online" : ""}`} title={connected ? t("Sincronização ativa") : t("A ligar")}>{connected ? <Wifi size={15}/> : <WifiOff size={15}/>}<span>{connected ? t("Sincronizada") : t("A ligar…")}</span></span></div>
         <div className="progress-line"><div className="progress-track"><span style={{ width: `${items.length ? (doneItems.length / items.length) * 100 : 0}%` }}/></div><span>{doneItems.length} {t("de")} {items.length} {t("comprados")}</span></div>
@@ -596,6 +648,20 @@ export default function App() {
           <span>{showDone ? t("Ver por comprar") : t("Ver comprados")} ({doneItems.length})</span><ChevronDown size={19} className={showDone ? "dock-chevron rotated" : "dock-chevron"}/>
         </button>
       </div>
+      </>}
+      {activeTab === "receipts" && <section className="receipts-section">
+        <div className="receipts-heading"><div><span className="eyebrow">ARQUIVO PARTILHADO</span><h1>Faturas de compras</h1><p>Comprovativos acessíveis a todos os membros desta lista.</p></div></div>
+        <form className="receipt-form" onSubmit={addReceipt}>
+          <h2><Upload size={18}/> Adicionar fatura</h2>
+          <label htmlFor="receipt-store">Supermercado</label><input id="receipt-store" value={receiptStore} onChange={e => setReceiptStore(e.target.value)} placeholder="Ex.: Continente, Lidl, Pingo Doce" maxLength={120} required/>
+          <div className="receipt-form-grid"><div><label htmlFor="receipt-date">Data da compra</label><input id="receipt-date" type="date" value={receiptDate} onChange={e => setReceiptDate(e.target.value)} required/></div><div><label htmlFor="receipt-total">Total (€)</label><input id="receipt-total" type="number" min="0" step="0.01" value={receiptTotal} onChange={e => setReceiptTotal(e.target.value)} placeholder="0,00" required/></div></div>
+          <label htmlFor="receipt-notes">Notas (opcional)</label><textarea id="receipt-notes" value={receiptNotes} onChange={e => setReceiptNotes(e.target.value)} maxLength={1000} placeholder="Ex.: compras da semana, IVA, descontos…"/>
+          <label className="receipt-file-label" htmlFor="receipt-file"><FileText size={17}/><span>{receiptFile ? receiptFile.name : "Anexar fotografia ou PDF"}</span><small>Máx. 10 MB</small></label><input className="receipt-file-input" id="receipt-file" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={e => setReceiptFile(e.target.files?.[0] || null)}/>
+          <button className="primary-button" type="submit" disabled={receiptBusy}>{receiptBusy ? <LoaderCircle size={17} className="spin"/> : <Plus size={17}/>} Guardar fatura</button>
+        </form>
+        <div className="receipt-list-heading"><h2>Faturas partilhadas</h2><span>{receipts.length} {receipts.length === 1 ? "fatura" : "faturas"}</span></div>
+        {receipts.length === 0 ? <div className="empty-state"><span className="empty-illustration">🧾</span><h3>Ainda não há faturas</h3><p>Adiciona o primeiro comprovativo para ficar disponível a toda a família.</p></div> : <div className="receipt-list">{receipts.map(receipt => <article className="receipt-card" key={receipt.id}><div className="receipt-card-icon"><Receipt size={21}/></div><div className="receipt-card-main"><strong>{receipt.storeName}</strong><span>{new Date(receipt.purchasedAt + "T12:00:00").toLocaleDateString("pt-PT")} · {receipt.memberName || "Membro"}</span>{receipt.notes && <p>{receipt.notes}</p>}</div><div className="receipt-card-side"><strong>{Number(receipt.total).toLocaleString("pt-PT",{style:"currency",currency:"EUR"})}</strong>{receipt.filePath && <button type="button" onClick={() => openReceipt(receipt)} aria-label="Abrir comprovativo"><ExternalLink size={17}/></button>}<button type="button" onClick={() => removeReceipt(receipt)} aria-label="Apagar fatura"><Trash2 size={16}/></button></div></article>)}</div>}
+      </section>}
       <footer className="app-footer"><span><Leaf size={15}/> {t("Menos esquecimentos, mais tempo juntos.")}</span><button onClick={() => { if (window.confirm(t("Sair desta lista neste dispositivo? A lista partilhada não será apagada."))) { localStorage.removeItem("lista-familia-code"); setListCode(""); setList(null); setItems([]); } }}>{t("Sair da lista")}</button></footer>
       {importPreview.length > 0 && <div className="modal-backdrop" onClick={() => !importBusy && setImportPreview([])}><section className="share-modal import-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="import-title"><button className="modal-close" onClick={() => !importBusy && setImportPreview([])} aria-label={t("Fechar")}><X size={20}/></button><div className="share-graphic"><ShoppingBasket size={28}/></div><h2 id="import-title">Confirmar produtos</h2><p>{importSource === "photo" ? "Revê os produtos reconhecidos na fotografia." : "Revê os produtos reconhecidos por voz."} Podes corrigir os nomes e quantidades antes de adicionar.</p><div className="import-preview-list">{importPreview.map((item, index) => <div className="import-preview-row" key={index}><input aria-label={`Produto ${index + 1}`} value={item.name} maxLength={100} onChange={e => editPreviewItem(index, { name: e.target.value })}/><input aria-label={`Quantidade de ${item.name}`} type="number" min="1" max="999" value={item.quantity} onChange={e => editPreviewItem(index, { quantity: e.target.value })}/><button type="button" aria-label={`Remover ${item.name}`} onClick={() => setImportPreview(previous => previous.filter((_, i) => i !== index))}><X size={17}/></button></div>)}</div>{importError && <p className="error-message">{importError}</p>}<button className="primary-button" disabled={importBusy || !importPreview.some(item => item.name.trim())} onClick={confirmImport}>{importBusy ? <LoaderCircle className="spin" size={17}/> : <Check size={17}/>} {importBusy ? "A adicionar…" : `Adicionar ${importPreview.length} produtos`}</button><button className="secondary-button" disabled={importBusy} onClick={() => setImportPreview([])}>Cancelar</button></section></div>}
       {showShare && <div className="modal-backdrop" onClick={() => setShowShare(false)}><section className="share-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="share-title"><button className="modal-close" onClick={() => setShowShare(false)} aria-label={t("Fechar")}><X size={20}/></button><div className="share-graphic"><Users size={28}/></div><h2 id="share-title">{t("A lista é melhor em família")}</h2><p>{t("Partilha o código com a família. Cada pessoa introduz o código na app para abrir a mesma lista e sincronizar as alterações.")}</p><div className="invite-qr"><QRCodeSVG value={inviteUrl} size={184} level="M" includeMargin/><span>Digitaliza para entrar na lista</span></div><div className="invite-qr"><QRCodeSVG value={inviteUrl} size={184} level="M" includeMargin/><span>Digitaliza para entrar na lista</span></div><div className="share-code-box"><span>{t("CÓDIGO DA LISTA")}</span><strong>{list.shareCode}</strong></div><button className="primary-button" onClick={shareListCode}>{typeof navigator.share === "function" ? <Users size={17}/> : <Copy size={17}/>} {t(typeof navigator.share === "function" ? "Partilhar código" : "Copiar código")}</button>{typeof navigator.share === "function" && <button className="secondary-button" onClick={copyListCode}><Clipboard size={17}/> {t("Copiar apenas o código")}</button>}<p className="share-note"><CircleHelp size={14}/> {t("Qualquer pessoa com o código pode aceder à lista. Partilha apenas com pessoas de confiança.")}</p></section></div>}
