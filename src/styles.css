@@ -221,3 +221,9 @@
 .receipt-extraction-preview>strong{display:flex;align-items:center;gap:6px;font-size:12px}
 .receipt-extraction-preview ul{margin:5px 0 0;padding-left:18px;display:grid;gap:3px}
 .receipt-extraction-preview small{color:#737c6d}
+
+/* List sharing QR: one clear QR, with accessible fallback actions */
+.invite-qr{margin:4px 0 12px}
+.invite-qr svg{image-rendering:pixelated}
+.share-modal>.primary-button{margin:0 0 8px}
+.share-modal>.secondary-button{margin-top:0}
