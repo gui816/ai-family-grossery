@@ -151,6 +151,7 @@ export default function App() {
         if (rpcError || !data?.list) throw rpcError || new Error(t("Lista não encontrada."));
         setList(data.list);
         setItems(data.items || []);
+        setReceipts(data.receipts || []);
         setError("");
       })
       .catch(() => {
@@ -211,6 +212,7 @@ export default function App() {
         if (alive && !rpcError && data?.list) {
           setList(data.list);
           setItems(data.items || []);
+          setReceipts(data.receipts || []);
         }
       })
       .subscribe(status => setConnected(alive && status === "SUBSCRIBED"));
@@ -772,7 +774,7 @@ export default function App() {
           <div className="receipt-form-grid"><div><label htmlFor="receipt-date">{t("Data da compra")}</label><input id="receipt-date" type="date" value={receiptDate} onChange={e => setReceiptDate(e.target.value)} required/></div><div><label htmlFor="receipt-total">{t("Total (€)")}</label><input id="receipt-total" type="number" min="0" step="0.01" value={receiptTotal} onChange={e => setReceiptTotal(e.target.value)} placeholder="0,00" required/></div></div>
           <label htmlFor="receipt-notes">{t("Notas (opcional)")}</label><textarea id="receipt-notes" value={receiptNotes} onChange={e => setReceiptNotes(e.target.value)} maxLength={1000} placeholder={t("Ex.: compras da semana, IVA, descontos…")}/>
           <label className={`receipt-file-label ${receiptExtractBusy ? "receipt-file-analyzing" : ""} ${receiptFile ? "receipt-file-selected" : ""}`} htmlFor="receipt-file"><span className="receipt-upload-icon">{receiptExtractBusy ? <LoaderCircle size={22} className="spin"/> : <FileText size={22}/>}</span><span className="receipt-upload-copy"><strong>{receiptFile ? receiptFile.name : t("Anexar fotografia ou PDF")}</strong><small>{receiptFile ? t("Ficheiro selecionado") : t("Fotografia ou PDF · até 10 MB")}</small></span><span className="receipt-upload-action">{receiptExtractBusy ? t("A analisar…") : t("Carregar ficheiro")}</span></label><input className="receipt-file-input" id="receipt-file" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={e => { const file = e.target.files?.[0] || null; setReceiptFile(file); setReceiptExtraction(null); if (file) void extractReceiptData(file); }}/>
-          {receiptExtractBusy && <div className="receipt-analysis-status" role="status" aria-live="polite"><LoaderCircle size={22} className="spin"/><div><strong>{t("A analisar a fatura com IA…")}</strong><span>{t("A identificar o supermercado, a data, o total, o IVA e os artigos. Isto pode demorar alguns segundos.")}</span><small>{t("Não feches esta página. Vamos preencher os campos automaticamente para confirmares antes de guardar.")}</small></div></div>}
+          {receiptExtractBusy && <div className="receipt-analysis-overlay" role="status" aria-live="polite"><div className="receipt-analysis-modal"><LoaderCircle size={36} className="spin"/><strong>{t("A analisar a fatura com IA…")}</strong><span>{t("A identificar o supermercado, a data, o total, o IVA e os artigos. Isto pode demorar alguns segundos.")}</span><small>{t("Não feches esta página. Vamos preencher os campos automaticamente para confirmares antes de guardar.")}</small></div></div>}
           <p className="receipt-ai-hint">{t("A IA tenta identificar o supermercado, a data, o total, o IVA e os artigos. Revê sempre as sugestões antes de guardar.")}</p>
           {receiptExtraction && <div className="receipt-extraction-preview" role="status">
             <strong><Check size={16}/> {t("Sugestões extraídas — confirma os campos acima")}</strong>
