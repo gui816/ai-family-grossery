@@ -518,3 +518,7 @@
 .add-panel .ai-import-status{margin:4px 0 7px}
 @keyframes voice-pulse{50%{box-shadow:0 0 0 4px #f8e4d9}}
 @media(max-width:390px){.add-import-tools{gap:5px}.add-tool-button{width:36px;height:36px;border-radius:11px}.add-tool-button svg{width:18px;height:18px}.add-main{gap:7px}.add-import-hint{font-size:9px;gap:4px;padding:6px 4px}}
+
+
+/* Put the product-count hint in the lower-right corner, above the purchased-items dock, instead of across the middle of the content. */
+@media(max-width:560px){.shopping-list-floating-nudge{left:auto;right:12px;bottom:calc(94px + env(safe-area-inset-bottom));transform:none;max-width:calc(100vw - 24px);gap:7px;padding:7px 9px;z-index:70}.shopping-nudge-icon{flex-basis:27px;width:27px}.shopping-nudge-icon svg{width:21px;height:21px}.shopping-nudge-copy strong{font-size:12px}.shopping-nudge-copy small{font-size:10px}.shopping-nudge-chevron{height:24px}.shopping-nudge-chevron svg{width:18px;height:18px}.shopping-nudge-close{display:flex;flex:0 0 20px;width:20px;height:20px}}
