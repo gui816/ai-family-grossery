@@ -415,3 +415,20 @@
 
 .install-help-modal .install-help-steps{display:grid;gap:12px;list-style:none;padding:0;margin:18px 0 22px}.install-help-modal .install-help-steps li{display:flex;align-items:center;gap:11px;padding:12px;border:1px solid #e1e8dc;border-radius:12px;background:#f7f8f2;color:#344b36;font-size:14px;line-height:1.4}.install-help-modal .install-help-steps svg{flex:0 0 auto;color:#426b46}.install-help-modal>p{line-height:1.55}
 @media(max-width:560px){.shopping-list-floating-nudge{bottom:calc(104px + env(safe-area-inset-bottom));max-width:calc(100vw - 52px);gap:8px;padding:8px 11px}.shopping-nudge-icon{flex-basis:30px;width:30px;height:30px}.shopping-nudge-copy strong{font-size:13px}.shopping-nudge-copy small{font-size:11px}.shopping-nudge-chevron svg{width:20px;height:20px}}
+
+
+/* First-run onboarding */
+.onboarding-backdrop{z-index:40;background:rgba(25,38,26,.56);backdrop-filter:blur(5px);padding:18px}
+.onboarding-modal{width:min(100%,390px);padding:30px 25px 22px;text-align:center;overflow:hidden}
+.onboarding-progress{height:4px;background:#e9eee4;border-radius:99px;overflow:hidden;margin:0 34px 24px}
+.onboarding-progress span{display:block;height:100%;border-radius:99px;background:#426b46;transition:width .22s ease}
+.onboarding-illustration{width:76px;height:76px;border-radius:25px;margin:0 auto 18px;display:grid;place-items:center;background:linear-gradient(145deg,#edf5e8,#dcebd6);color:#315536;box-shadow:inset 0 0 0 1px #d2e2cb}
+.onboarding-step-label{display:block;color:#698168;font-size:10px;font-weight:800;letter-spacing:1.35px;margin-bottom:10px}
+.onboarding-modal h2{font-family:Manrope,sans-serif;font-size:24px;line-height:1.2;letter-spacing:-.7px;margin:0 auto 12px;max-width:300px}
+.onboarding-description{font-size:13px;line-height:1.7;color:#737b6f;margin:0 auto;max-width:310px;min-height:88px}
+.onboarding-dots{display:flex;align-items:center;justify-content:center;gap:7px;margin:19px 0 21px}
+.onboarding-dots span{height:6px;width:6px;border-radius:99px;background:#dce3d7;transition:width .2s,background .2s}
+.onboarding-dots span.active{width:22px;background:#426b46}
+.onboarding-next{margin:0;min-height:49px;font-size:13px}
+.onboarding-skip{display:block;margin:10px auto 0;padding:9px 12px;border:0;background:transparent;color:#858d80;font-size:12px;font-weight:600}
+@media(max-width:400px){.onboarding-modal{padding:27px 20px 18px}.onboarding-modal h2{font-size:22px}.onboarding-description{min-height:95px;font-size:12px}.onboarding-progress{margin-bottom:20px}}
