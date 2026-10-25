@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase, isSupabaseConfigured } from "./lib/supabase.js";
 import {
-  ArrowRight, Check, CheckCheck, ChevronDown, CircleHelp, Clipboard, Copy, Share2, Repeat2,
+  ArrowRight, Check, CheckCheck, ChevronDown, CircleHelp, Clipboard, Copy, Share2, Repeat2, Download,
   Camera, Mic, Leaf, LoaderCircle, Plus, ShoppingBasket, Trash2, Users, Wifi, WifiOff, X, FileText, Receipt, Upload, ExternalLink
 } from "lucide-react";
 
@@ -169,6 +169,11 @@ export default function App() {
     supabase.rpc("get_family_list", { p_share_code: initialInviteCode.toUpperCase() }).then(({ data, error: lookupError }) => { if (active && !lookupError && data?.list) setInviteList(data.list); }).catch(() => {}).finally(() => { if (active) setInviteLookupBusy(false); });
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    if (!shoppingMode || activeTab !== "shopping") return;
+    requestAnimationFrame(() => document.querySelector(".supermarket-summary")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }, [shoppingMode, activeTab]);
 
   useEffect(() => {
     const onInstallAvailable = (event) => { event.preventDefault(); setInstallPrompt(event); };
@@ -687,6 +692,7 @@ export default function App() {
           <div className="refined-brand-copy"><span className="brand-name">Listora</span><span className="list-name-inline">{displayListName}<ChevronDown size={15}/></span></div>
         </div>
         <div className="topbar-actions">
+          {!isStandalone && <button type="button" className="install-app-button" onClick={installApp} aria-label={t("Instalar aplicação")} title={t("Instalar aplicação")}><Download size={17}/><span>{t("Instalar")}</span></button>}
           <LanguagePicker language={language} onChange={setLanguage} />
           <button className="icon-action" onClick={() => setShowShare(true)} aria-label={t("Partilhar")} title={t("Partilhar")}><Share2 size={22}/></button>
           <button className="icon-action" onClick={() => { if (doneItems.length) repeatItem(doneItems[0].name); else document.querySelector(".add-main input")?.focus(); }} aria-label={t("Repetir compras")} title={t("Repetir compras")}><Repeat2 size={22}/></button>
