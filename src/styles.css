@@ -565,3 +565,11 @@
 @keyframes voice-icon-pulse{0%,100%{box-shadow:0 0 0 0 #82a97b00}50%{box-shadow:0 0 0 10px #82a97b28}}
 @keyframes voice-dot-pulse{0%,100%{opacity:1}50%{opacity:.35}}
 @media(prefers-reduced-motion:reduce){.voice-modal-icon.is-listening,.voice-status-pill.active .voice-status-dot,.voice-wave span{animation:none}}
+
+
+/* Compact, aligned microphone status in the voice modal */
+.voice-status-row{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 auto 18px}
+.voice-status-row .voice-modal-icon{width:52px;height:52px;margin:0;border-radius:17px;flex:0 0 52px}
+.voice-status-row .voice-status-pill{margin:0}
+.voice-modal .voice-status-row+.voice-modal-title{margin-top:0}
+@media(max-width:420px){.voice-status-row{gap:9px}.voice-status-row .voice-modal-icon{width:46px;height:46px;flex-basis:46px;border-radius:15px}.voice-status-row .voice-status-pill{font-size:10px;padding:7px 9px}}
