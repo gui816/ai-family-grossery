@@ -185,10 +185,18 @@ export default function App() {
   useEffect(() => {
     if (activeTab !== "shopping") { setItemsSectionVisible(false); return; }
     const section = document.querySelector(".items-section");
-    if (!section || typeof IntersectionObserver === "undefined") return;
-    const observer = new IntersectionObserver(([entry]) => setItemsSectionVisible(entry.isIntersecting && entry.intersectionRatio >= 0.12), { threshold: [0, 0.12, 0.25] });
-    observer.observe(section);
-    return () => observer.disconnect();
+    if (!section) return;
+    const updateVisibility = () => {
+      const bounds = section.getBoundingClientRect();
+      setItemsSectionVisible(bounds.top < window.innerHeight * 0.82 && bounds.bottom > window.innerHeight * 0.18);
+    };
+    updateVisibility();
+    window.addEventListener("scroll", updateVisibility, { passive: true });
+    window.addEventListener("resize", updateVisibility);
+    return () => {
+      window.removeEventListener("scroll", updateVisibility);
+      window.removeEventListener("resize", updateVisibility);
+    };
   }, [activeTab, items.length, shoppingMode]);
 
   useEffect(() => {
