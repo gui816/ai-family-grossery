@@ -178,7 +178,7 @@ export default function App() {
   }, [listCode]);
 
   useEffect(() => {
-    if (!list || !memberName || showOnboarding || localStorage.getItem("listora-onboarding-v1-complete") === "1") return;
+    if (!list || !memberName || showOnboarding || localStorage.getItem("listora-onboarding-v2-complete") === "1") return;
     setShowOnboarding(true);
     setOnboardingStep(0);
   }, [list, memberName, showOnboarding]);
@@ -838,9 +838,9 @@ export default function App() {
         </section>
       </div>}
       {importPreview.length > 0 && <div className="modal-backdrop" onClick={() => !importBusy && setImportPreview([])}><section className="share-modal import-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="import-title"><button className="modal-close" onClick={() => !importBusy && setImportPreview([])} aria-label={t("Fechar")}><X size={20}/></button><div className="share-graphic"><ShoppingBasket size={28}/></div><h2 id="import-title">{t("Confirmar produtos")}</h2><p>{importSource === "photo" ? "Revê os produtos reconhecidos na fotografia." : "Revê os produtos reconhecidos por voz."} Podes corrigir os nomes e quantidades antes de adicionar.</p><div className="import-preview-list">{importPreview.map((item, index) => <div className="import-preview-row" key={index}><input aria-label={`Produto ${index + 1}`} value={item.name} maxLength={100} onChange={e => editPreviewItem(index, { name: e.target.value })}/><input aria-label={`Quantidade de ${item.name}`} type="number" min="1" max="999" value={item.quantity} onChange={e => editPreviewItem(index, { quantity: e.target.value })}/><button type="button" aria-label={`Remover ${item.name}`} onClick={() => setImportPreview(previous => previous.filter((_, i) => i !== index))}><X size={17}/></button></div>)}</div>{importError && <p className="error-message">{importError}</p>}<button className="primary-button" disabled={importBusy || !importPreview.some(item => item.name.trim())} onClick={confirmImport}>{importBusy ? <LoaderCircle className="spin" size={17}/> : <Check size={17}/>} {importBusy ? "A adicionar…" : `Adicionar ${importPreview.length} produtos`}</button><button className="secondary-button" disabled={importBusy} onClick={() => setImportPreview([])}>{t("Cancelar")}</button></section></div>}
-      {showOnboarding && <div className="modal-backdrop onboarding-backdrop" onClick={() => { setShowOnboarding(false); localStorage.setItem("listora-onboarding-v1-complete", "1"); }}>
+      {showOnboarding && <div className="modal-backdrop onboarding-backdrop" onClick={() => { setShowOnboarding(false); localStorage.setItem("listora-onboarding-v2-complete", "1"); }}>
         <section className="share-modal onboarding-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
-          <button type="button" className="modal-close" onClick={() => { setShowOnboarding(false); localStorage.setItem("listora-onboarding-v1-complete", "1"); }} aria-label={t("Fechar introdução")}><X size={20}/></button>
+          <button type="button" className="modal-close" onClick={() => { setShowOnboarding(false); localStorage.setItem("listora-onboarding-v2-complete", "1"); }} aria-label={t("Fechar introdução")}><X size={20}/></button>
           <div className="onboarding-progress" aria-label={t("Passo")}><span style={{width: `${((onboardingStep + 1) / 5) * 100}%`}}/></div>
           <div className={`onboarding-art onboarding-art-step-${onboardingStep}`} aria-hidden="true">
             {onboardingStep === 0 && <div className="art-shared-list">
@@ -887,15 +887,15 @@ export default function App() {
             "Escreve o nome de um produto ou usa as sugestões rápidas. Marca cada artigo quando o colocares no carrinho.",
             "Podes fotografar uma lista em papel ou ditar os produtos por voz. Revê as sugestões antes de as adicionar.",
             "Abre Partilhar para convidares outras pessoas. Todos podem consultar e atualizar a mesma lista.",
-            "Ativa o modo supermercado para te concentrares nos artigos por comprar. Também podes repetir compras e guardar listas habituais."
+            "Ativa o modo supermercado para te concentrares nos artigos por comprar. Também podes repetir compras, guardar listas habituais e guardar as faturas para consultar as compras mais tarde."
           ][onboardingStep])}</p>
           <div className="onboarding-dots" aria-label={t("Progresso da introdução")}>{[0,1,2,3,4].map(step => <span key={step} className={step === onboardingStep ? "active" : ""}/>)}</div>
           <button type="button" className="primary-button onboarding-next" onClick={() => {
             if (onboardingStep < 4) { setOnboardingStep(step => step + 1); return; }
             setShowOnboarding(false);
-            localStorage.setItem("listora-onboarding-v1-complete", "1");
+            localStorage.setItem("listora-onboarding-v2-complete", "1");
           }}>{onboardingStep === 4 ? t("Começar a usar a Listora") : t("Continuar")} <ArrowRight size={18}/></button>
-          <button type="button" className="onboarding-skip" onClick={() => { setShowOnboarding(false); localStorage.setItem("listora-onboarding-v1-complete", "1"); }}>{t("Saltar introdução")}</button>
+          <button type="button" className="onboarding-skip" onClick={() => { setShowOnboarding(false); localStorage.setItem("listora-onboarding-v2-complete", "1"); }}>{t("Saltar introdução")}</button>
         </section>
       </div>}
       {showInstallHelp && <div className="modal-backdrop install-help-backdrop" onClick={() => setShowInstallHelp(false)}><section className="share-modal install-help-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="install-help-title"><button className="modal-close" onClick={() => setShowInstallHelp(false)} aria-label={t("Fechar")}><X size={20}/></button><div className="share-graphic"><Download size={28}/></div><h2 id="install-help-title">{t("Instalar a Listora no iPhone")}</h2><p>{t("No Safari, toca em Partilhar na barra do navegador e escolhe «Adicionar ao ecrã principal». Depois toca em Adicionar.")}</p><ol className="install-help-steps"><li><Share2 size={18}/><span>{t("1. Toca no botão Partilhar do Safari.")}</span></li><li><Plus size={18}/><span>{t("2. Escolhe «Adicionar ao ecrã principal».")}</span></li><li><Check size={18}/><span>{t("3. Confirma em Adicionar.")}</span></li></ol><button className="primary-button" onClick={() => setShowInstallHelp(false)}>{t("Percebi")}</button></section></div>}
