@@ -128,6 +128,8 @@ export default function App() {
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
   const [showShare, setShowShare] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(0);
   const [showListMenu, setShowListMenu] = useState(false);
   const [showInstallHelp, setShowInstallHelp] = useState(false);
   const [importPreview, setImportPreview] = useState([]);
@@ -173,6 +175,12 @@ export default function App() {
       .finally(() => alive && setLoading(false));
     return () => { alive = false; };
   }, [listCode]);
+
+  useEffect(() => {
+    if (!list || !memberName || localStorage.getItem("listora-onboarding-v1-complete") === "1") return;
+    setShowOnboarding(true);
+    setOnboardingStep(0);
+  }, [list, memberName]);
 
   useEffect(() => {
     if (!initialInviteCode || !isSupabaseConfigured) return;
@@ -820,6 +828,37 @@ export default function App() {
       </section>}
       <footer className="app-footer"><span><Leaf size={15}/> {t("Menos esquecimentos, mais tempo juntos.")}</span><button onClick={leaveCurrentList}>{t("Sair da lista")} / {t("Criar nova")}</button></footer>
       {importPreview.length > 0 && <div className="modal-backdrop" onClick={() => !importBusy && setImportPreview([])}><section className="share-modal import-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="import-title"><button className="modal-close" onClick={() => !importBusy && setImportPreview([])} aria-label={t("Fechar")}><X size={20}/></button><div className="share-graphic"><ShoppingBasket size={28}/></div><h2 id="import-title">{t("Confirmar produtos")}</h2><p>{importSource === "photo" ? "Revê os produtos reconhecidos na fotografia." : "Revê os produtos reconhecidos por voz."} Podes corrigir os nomes e quantidades antes de adicionar.</p><div className="import-preview-list">{importPreview.map((item, index) => <div className="import-preview-row" key={index}><input aria-label={`Produto ${index + 1}`} value={item.name} maxLength={100} onChange={e => editPreviewItem(index, { name: e.target.value })}/><input aria-label={`Quantidade de ${item.name}`} type="number" min="1" max="999" value={item.quantity} onChange={e => editPreviewItem(index, { quantity: e.target.value })}/><button type="button" aria-label={`Remover ${item.name}`} onClick={() => setImportPreview(previous => previous.filter((_, i) => i !== index))}><X size={17}/></button></div>)}</div>{importError && <p className="error-message">{importError}</p>}<button className="primary-button" disabled={importBusy || !importPreview.some(item => item.name.trim())} onClick={confirmImport}>{importBusy ? <LoaderCircle className="spin" size={17}/> : <Check size={17}/>} {importBusy ? "A adicionar…" : `Adicionar ${importPreview.length} produtos`}</button><button className="secondary-button" disabled={importBusy} onClick={() => setImportPreview([])}>{t("Cancelar")}</button></section></div>}
+      {showOnboarding && <div className="modal-backdrop onboarding-backdrop" onClick={() => { setShowOnboarding(false); localStorage.setItem("listora-onboarding-v1-complete", "1"); }}>
+        <section className="share-modal onboarding-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
+          <button type="button" className="modal-close" onClick={() => { setShowOnboarding(false); localStorage.setItem("listora-onboarding-v1-complete", "1"); }} aria-label={t("Fechar introdução")}><X size={20}/></button>
+          <div className="onboarding-progress" aria-label={t("Passo")}><span style={{width: `${((onboardingStep + 1) / 5) * 100}%`}}/></div>
+          <div className="onboarding-illustration">
+            {onboardingStep === 0 ? <ShoppingBasket size={32}/> : onboardingStep === 1 ? <Plus size={32}/> : onboardingStep === 2 ? <Camera size={32}/> : onboardingStep === 3 ? <Users size={32}/> : <ShoppingBasket size={32}/>}
+          </div>
+          <span className="onboarding-step-label">{t("DESCOBRE A LISTORA")} · {onboardingStep + 1}/5</span>
+          <h2 id="onboarding-title">{t([
+            "A tua lista está pronta!",
+            "Adiciona o que falta em casa",
+            "Adiciona vários produtos de uma vez",
+            "Partilha com a família",
+            "Compras mais simples no supermercado"
+          ][onboardingStep])}</h2>
+          <p className="onboarding-description">{t([
+            "Tudo o que precisas para organizar as compras, num só lugar e sempre sincronizado com a tua família.",
+            "Escreve o nome de um produto ou usa as sugestões rápidas. Marca cada artigo quando o colocares no carrinho.",
+            "Podes fotografar uma lista em papel ou ditar os produtos por voz. Revê as sugestões antes de as adicionar.",
+            "Abre Partilhar para convidares outras pessoas. Todos podem consultar e atualizar a mesma lista.",
+            "Ativa o modo supermercado para te concentrares nos artigos por comprar. Também podes repetir compras e guardar listas habituais."
+          ][onboardingStep])}</p>
+          <div className="onboarding-dots" aria-label={t("Progresso da introdução")}>{[0,1,2,3,4].map(step => <span key={step} className={step === onboardingStep ? "active" : ""}/>)}</div>
+          <button type="button" className="primary-button onboarding-next" onClick={() => {
+            if (onboardingStep < 4) { setOnboardingStep(step => step + 1); return; }
+            setShowOnboarding(false);
+            localStorage.setItem("listora-onboarding-v1-complete", "1");
+          }}>{onboardingStep === 4 ? t("Começar a usar a Listora") : t("Continuar")} <ArrowRight size={18}/></button>
+          <button type="button" className="onboarding-skip" onClick={() => { setShowOnboarding(false); localStorage.setItem("listora-onboarding-v1-complete", "1"); }}>{t("Saltar introdução")}</button>
+        </section>
+      </div>}
       {showInstallHelp && <div className="modal-backdrop install-help-backdrop" onClick={() => setShowInstallHelp(false)}><section className="share-modal install-help-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="install-help-title"><button className="modal-close" onClick={() => setShowInstallHelp(false)} aria-label={t("Fechar")}><X size={20}/></button><div className="share-graphic"><Download size={28}/></div><h2 id="install-help-title">{t("Instalar a Listora no iPhone")}</h2><p>{t("No Safari, toca em Partilhar na barra do navegador e escolhe «Adicionar ao ecrã principal». Depois toca em Adicionar.")}</p><ol className="install-help-steps"><li><Share2 size={18}/><span>{t("1. Toca no botão Partilhar do Safari.")}</span></li><li><Plus size={18}/><span>{t("2. Escolhe «Adicionar ao ecrã principal».")}</span></li><li><Check size={18}/><span>{t("3. Confirma em Adicionar.")}</span></li></ol><button className="primary-button" onClick={() => setShowInstallHelp(false)}>{t("Percebi")}</button></section></div>}
       {showShare && <div className="modal-backdrop" onClick={() => setShowShare(false)}><section className="share-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="share-title"><button className="modal-close" onClick={() => setShowShare(false)} aria-label={t("Fechar")}><X size={20}/></button><div className="share-graphic"><Users size={28}/></div><h2 id="share-title">{t("A lista é melhor em família")}</h2><p>{t("Mostra este QR Code a quem queres convidar. Ao digitalizar, o convite abre a Listora com esta lista pronta a entrar.")}</p><div className="invite-qr"><QRCodeSVG value={inviteUrl} size={208} level="H" includeMargin/><span>{t("Digitaliza com a câmara para entrar na lista")}</span></div><button className="primary-button" onClick={copyInviteLink}><Copy size={17}/> Copiar link de convite</button><div className="share-code-box"><span>{t("CÓDIGO DA LISTA")}</span><strong>{list.shareCode}</strong></div><button className="primary-button" onClick={shareListCode}>{typeof navigator.share === "function" ? <Users size={17}/> : <Copy size={17}/>} {t(typeof navigator.share === "function" ? "Partilhar código" : "Copiar código")}</button>{typeof navigator.share === "function" && <button className="secondary-button" onClick={copyListCode}><Clipboard size={17}/> {t("Copiar apenas o código")}</button>}<p className="share-note"><CircleHelp size={14}/> {t("Qualquer pessoa com o código pode aceder à lista. Partilha apenas com pessoas de confiança.")}</p></section></div>}
       {toast && <div className="toast"><Check size={16}/>{toast}</div>}
