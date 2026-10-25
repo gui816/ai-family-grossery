@@ -860,7 +860,7 @@ export default function App() {
               <div className="art-paper-list"><strong>Lista de compras</strong>{["Leite","Pão","Ovos","Bananas","Fraldas"].map(product => <span key={product}><i/> {product}</span>)}</div>
               <div className="art-scan-arrow">➜</div>
               <div className="art-phone-list"><div className="art-phone-camera"><Camera size={20}/></div><strong>IA reconhece os produtos</strong>{["Leite","Pão","Ovos","Bananas"].map(product => <span key={product}><i>✓</i>{product}</span>)}<small>Revê antes de adicionar</small></div>
-              <div className="art-voice-pill"><Mic size={15}/><span>“Leite, pão e ovos”</span><b>▂▅▃▇▅</b></div>
+              
             </div>}
             {onboardingStep === 3 && <div className="art-voice-capture">
               <div className="art-voice-mic"><Mic size={36}/></div>
