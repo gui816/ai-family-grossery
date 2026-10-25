@@ -99,6 +99,7 @@ export default function App() {
   const channelRef = useRef(null);
   const [list, setList] = useState(null);
   const [installPrompt, setInstallPrompt] = useState(null);
+  const [installDismissed, setInstallDismissed] = useState(() => localStorage.getItem("listora-install-dismissed") === "1");
   const [isStandalone, setIsStandalone] = useState(() => window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true);
   const displayListName = list && ["Compras da família", "Family shopping", "Compra familiar"].includes(list.name) ? t("Compras da família") : list?.name;
   const [items, setItems] = useState([]);
@@ -686,13 +687,13 @@ export default function App() {
 
   return (
     <main className="app-shell">
+      {!isStandalone && !installDismissed && <aside className="install-prompt-banner" role="region" aria-label={t("Instalar Listora")}><div className="install-prompt-icon"><Download size={19}/></div><div className="install-prompt-copy"><strong>{t("Instala a Listora")}</strong><span>{t("Acede às tuas listas diretamente do ecrã inicial.")}</span></div><button type="button" className="install-prompt-action" onClick={installApp}>{t("Instalar")}</button><button type="button" className="install-prompt-close" aria-label={t("Fechar aviso de instalação")} onClick={() => {setInstallDismissed(true); localStorage.setItem("listora-install-dismissed","1");}}><X size={18}/></button></aside>}
       <header className="topbar refined-topbar">
         <div className="refined-brand">
           <span className="brand-mark"><ShoppingBasket size={24}/></span>
           <div className="refined-brand-copy"><span className="brand-name">Listora</span><span className="list-name-inline">{displayListName}<ChevronDown size={15}/></span></div>
         </div>
         <div className="topbar-actions">
-          {!isStandalone && <button type="button" className="install-app-button" onClick={installApp} aria-label={t("Instalar aplicação")} title={t("Instalar aplicação")}><Download size={17}/><span>{t("Instalar")}</span></button>}
           <LanguagePicker language={language} onChange={setLanguage} />
           <button className="icon-action" onClick={() => setShowShare(true)} aria-label={t("Partilhar")} title={t("Partilhar")}><Share2 size={22}/></button>
           <button className="icon-action" onClick={() => { if (doneItems.length) repeatItem(doneItems[0].name); else document.querySelector(".add-main input")?.focus(); }} aria-label={t("Repetir compras")} title={t("Repetir compras")}><Repeat2 size={22}/></button>
