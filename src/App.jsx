@@ -393,29 +393,15 @@ export default function App() {
     setImportError("");
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      setImportError("O reconhecimento de voz não está disponível neste navegador. Experimenta usar o microfone do teclado para ditar no campo de texto.");
+      setImportError(t("O reconhecimento de voz não é suportado neste navegador. Toca no campo do produto e usa o microfone do teclado para ditar."));
+      document.querySelector('input[placeholder*="produto"]')?.focus();
       return;
     }
     if (listening) { recognitionRef.current?.stop(); setListening(false); return; }
     try {
-      // Ask for microphone access on the user gesture before starting recognition.
-      // This allows Android/WebView to show its permission dialog when supported.
-      if (navigator.mediaDevices?.getUserMedia) {
-        let stream;
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        } catch (permissionError) {
-          const denied = permissionError?.name === "NotAllowedError" || permissionError?.name === "PermissionDeniedError";
-          setImportError(denied
-            ? t("O acesso ao microfone foi recusado. Ativa a permissão nas definições da aplicação.")
-            : t("Não foi possível aceder ao microfone neste dispositivo."));
-          return;
-        } finally {
-          stream?.getTracks().forEach(track => track.stop());
-        }
-      }
+      // Let SpeechRecognition request microphone access itself. A separate getUserMedia prompt can consume the user gesture on Android.
       const recognition = new SpeechRecognition();
-      recognition.lang = language === "pt-PT" ? "pt-PT" : language;
+      recognition.lang = language === "pt-PT" ? "pt-PT" : language === "en" ? "en-US" : language;
       recognition.continuous = false;
       recognition.interimResults = false;
       recognition.maxAlternatives = 1;
@@ -423,14 +409,20 @@ export default function App() {
       recognition.onstart = () => setListening(true);
       recognition.onerror = event => {
         setListening(false);
-        setImportError(event.error === "not-allowed"
-          ? t("O acesso ao microfone foi recusado. Ativa a permissão nas definições da aplicação.")
-          : t("Não foi possível reconhecer a voz. Tenta novamente."));
+        const message = event.error === "not-allowed" || event.error === "service-not-allowed"
+          ? t("O acesso ao microfone foi recusado. Permite o microfone nas definições do navegador.")
+          : event.error === "network"
+            ? t("O reconhecimento de voz precisa de uma ligação à Internet. Verifica a ligação e tenta novamente.")
+            : event.error === "no-speech"
+              ? t("Não detetámos voz. Toca no microfone e fala depois de aparecer a indicação de escuta.")
+              : t("Não foi possível reconhecer a voz. Neste navegador, podes usar o microfone do teclado para ditar no campo do produto.");
+        setImportError(message);
       };
+      recognition.onnomatch = () => { setImportError(t("Não percebemos os produtos ditos. Tenta falar um pouco mais devagar.")); };
       recognition.onend = () => setListening(false);
       recognition.onresult = async event => {
         const transcript = event.results?.[0]?.[0]?.transcript?.trim();
-        if (!transcript) { setImportError("Não foi detetado discurso."); return; }
+        if (!transcript) { setImportError(t("Não foi detetada voz. Tenta novamente.")); return; }
         setImportBusy(true); setImportSource("voice"); setImportError("");
         try {
           const itemsFound = await callGemini({ text: transcript });
