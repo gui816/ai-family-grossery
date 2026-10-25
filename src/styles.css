@@ -31,8 +31,14 @@
 .template-chip{display:flex;flex-direction:column;align-items:flex-start;gap:4px;flex:0 0 auto;max-width:190px;border:1px solid #dfe7d9;border-radius:11px;padding:10px 12px;background:#fffefa;color:var(--green-dark);text-align:left}
 .template-chip span{font-size:11px;font-weight:700;overflow-wrap:anywhere}
 .template-chip small{font-size:10px;color:#8a9284}
-.shopping-mode-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding:10px 12px;border:1px solid #e2e8dc;border-radius:12px;background:#eef4e9;color:var(--green-dark);font-size:12px;font-weight:700}
-.shopping-mode-row>span{display:flex;align-items:center;gap:7px}
+.shopping-mode-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;padding:14px 16px;border:1.5px solid #b7d0b0;border-radius:16px;background:linear-gradient(110deg,#edf5e9 0%,#e5f0df 100%);color:var(--green-dark);font-size:14px;font-weight:700;box-shadow:0 3px 10px #284c2c0a;transition:background .2s,border-color .2s,box-shadow .2s}
+.shopping-mode-row>span,.shopping-mode-copy{display:flex;align-items:center;gap:11px;min-width:0}
+.shopping-mode-copy>svg{flex:0 0 auto;width:24px;height:24px}
+.shopping-mode-text{display:flex;flex-direction:column;gap:4px;min-width:0}
+.shopping-mode-text strong{font-size:15px;font-weight:800;line-height:1.2}
+.shopping-mode-text small{font-size:12px;font-weight:500;line-height:1.35;color:#59735a}
+.shopping-mode-row .mode-toggle{flex:0 0 auto;min-height:44px;padding:0 18px;border:1px solid #d0dfca;border-radius:12px;background:#fff;color:#285b3b;font-size:14px;font-weight:800;box-shadow:0 1px 2px #1c3a2010}
+.shopping-mode-row .mode-toggle.active{background:#245b3b;border-color:#245b3b;color:#fff}
 .mode-toggle{border:1px solid #d2dfca;border-radius:8px;background:#fffefa;color:var(--green);padding:7px 12px;font-size:11px;font-weight:700}
 .mode-toggle.active{background:var(--green);color:#fff;border-color:var(--green)}
 .supermarket-list{gap:10px}
@@ -58,7 +64,7 @@
 .delete-button{min-width:44px;min-height:44px}
 .quantity-control input{min-height:36px}
 .mode-toggle{min-height:40px;min-width:76px}
-@media(max-width:400px){.category-tab{padding-left:11px;padding-right:11px}.templates-title-row button{min-height:40px}.shopping-mode-row{margin-top:8px}}
+@media(max-width:400px){.category-tab{padding-left:11px;padding-right:11px}.templates-title-row button{min-height:40px}.shopping-mode-row{margin-top:10px;padding:12px;gap:8px}.shopping-mode-text strong{font-size:14px}.shopping-mode-text small{font-size:11px}.shopping-mode-row .mode-toggle{padding:0 13px;min-height:42px}}
 
 .check-button,.check-button.checked{background:transparent!important;border-color:transparent!important}
 
@@ -319,7 +325,7 @@
 .supermarket-summary-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#687563;font-size:11px}
 .purchased-filter{border:1px solid #d3e1cd;border-radius:999px;background:#fffefa;padding:7px 10px;color:#426b46;font-size:11px;font-weight:700;white-space:nowrap}
 .purchased-filter.active{background:#315536;color:white;border-color:#315536}
-.shopping-mode-row.active{background:#e5f0df;border-color:#cbdcc3}
+.shopping-mode-row.active{background:#e1efdc;border-color:#7eaa77;box-shadow:0 4px 14px #315e3318}
 .supermarket-items-section .section-heading{margin-top:12px}
 .supermarket-items-section .section-heading h2{font-size:12px;color:#6b7c65}
 .supermarket-items-section .supermarket-list .shopping-item{min-height:74px}
