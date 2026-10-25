@@ -3,7 +3,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { supabase, isSupabaseConfigured } from "./lib/supabase.js";
 import {
   ArrowRight, Check, CheckCheck, ChevronDown, CircleHelp, Clipboard, Copy, Share2, Repeat2, Download,
-  Camera, Mic, Leaf, LoaderCircle, Plus, ShoppingBasket, Trash2, Users, Wifi, WifiOff, X, FileText, Receipt, Upload, ExternalLink
+  Camera, Mic, Leaf, LoaderCircle, Plus, ShoppingBasket, Trash2, Users, LogOut, Wifi, WifiOff, X, FileText, Receipt, Upload, ExternalLink
 } from "lucide-react";
 
 const CATEGORIES = [
@@ -769,7 +769,7 @@ export default function App() {
           {receiptNeedsName && !memberName.trim() && <div className="receipt-name-prompt"><strong>{t("Antes de guardar, como te devemos identificar?")}</strong><label htmlFor="receipt-member-name">{t("O teu nome")}</label><input id="receipt-member-name" value={memberNameInput} onChange={e => setMemberNameInput(e.target.value)} placeholder="Ex.: Ana" maxLength={60} autoComplete="name" required/><small>O nome ficará associado às faturas que adicionares nesta lista.</small><button type="button" className="secondary-button" disabled={!memberNameInput.trim()} onClick={() => { const displayName = memberNameInput.trim().slice(0,60); localStorage.setItem("listora-member-name", displayName); setMemberName(displayName); setReceiptNeedsName(false); setError(""); }}>Guardar nome e continuar</button></div>}
           <label htmlFor="receipt-store">{t("Supermercado")}</label><input id="receipt-store" value={receiptStore} onChange={e => setReceiptStore(e.target.value)} placeholder={t("Ex.: Continente, Lidl, Pingo Doce")} maxLength={120} required/>
           <div className="receipt-form-grid"><div><label htmlFor="receipt-date">{t("Data da compra")}</label><input id="receipt-date" type="date" value={receiptDate} onChange={e => setReceiptDate(e.target.value)} required/></div><div><label htmlFor="receipt-total">{t("Total (€)")}</label><input id="receipt-total" type="number" min="0" step="0.01" value={receiptTotal} onChange={e => setReceiptTotal(e.target.value)} placeholder="0,00" required/></div></div>
-          <label htmlFor="receipt-notes">{t("Notas (opcional")}</label><textarea id="receipt-notes" value={receiptNotes} onChange={e => setReceiptNotes(e.target.value)} maxLength={1000} placeholder={t("Ex.: compras da semana, IVA, descontos…")}/>
+          <label htmlFor="receipt-notes">{t("Notas (opcional)")}</label><textarea id="receipt-notes" value={receiptNotes} onChange={e => setReceiptNotes(e.target.value)} maxLength={1000} placeholder={t("Ex.: compras da semana, IVA, descontos…")}/>
           <label className="receipt-file-label" htmlFor="receipt-file"><FileText size={17}/><span>{receiptFile ? receiptFile.name : "Anexar fotografia ou PDF"}</span><small>{t("Máx. 10 MB")}</small></label><input className="receipt-file-input" id="receipt-file" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={e => { const file = e.target.files?.[0] || null; setReceiptFile(file); setReceiptExtraction(null); if (file) void extractReceiptData(file); }}/>
           {receiptExtractBusy && <p className="receipt-ai-hint receipt-ai-progress"><LoaderCircle size={16} className="spin"/> {t("A analisar a fatura automaticamente…")}</p>}
           <p className="receipt-ai-hint">{t("A IA tenta identificar o supermercado, a data, o total, o IVA e os artigos. Revê sempre as sugestões antes de guardar.")}</p>
