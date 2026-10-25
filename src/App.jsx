@@ -744,7 +744,7 @@ export default function App() {
         </div>
         <div className="welcome-foot"><Users size={17}/><span>{t("Feita para partilhar. Simples para todos.")}</span></div>
       </section>
-      </section>}
+      }
       <footer className="welcome-footer">{showDiscover ? <button type="button" className="discover-footer-link" onClick={closeDiscover}>{t("Voltar à página inicial")}</button> : <>{t("A tua casa, mais organizada.")} · <button type="button" className="discover-footer-link" onClick={openDiscover}>{t("Conhecer todas as funcionalidades")}</button></>}</footer>
     </main>
   );
