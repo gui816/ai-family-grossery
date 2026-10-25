@@ -3,7 +3,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { supabase, isSupabaseConfigured } from "./lib/supabase.js";
 import {
   ArrowRight, ArrowLeft, Sparkles, Check, CheckCheck, ChevronDown, CircleHelp, Clipboard, Copy, Share2, Repeat2, Download,
-  Camera, Mic, Leaf, LoaderCircle, Plus, ShoppingBasket, Trash2, Users, LogOut, Wifi, WifiOff, X, FileText, Receipt, Upload, ExternalLink
+  Camera, Mic, Leaf, LoaderCircle, Plus, ShoppingBasket, Trash2, Users, LogOut, Wifi, WifiOff, X, FileText, Receipt, Upload, ExternalLink, Zap, Smartphone, Bell
 } from "lucide-react";
 
 const CATEGORIES = [
@@ -776,7 +776,7 @@ export default function App() {
 
   return (
     <main className="app-shell">
-      {!isStandalone && !installDismissed && <aside className="install-prompt-banner" role="region" aria-label={t("Instalar Listora")}><div className="install-prompt-icon"><Download size={19}/></div><div className="install-prompt-copy"><strong>{t("Instala a Listora")}</strong><span>{t("Acede às tuas listas diretamente do ecrã inicial.")}</span></div><button type="button" className="install-prompt-action" onClick={installApp}>{(/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) ? t("Como instalar") : t("Instalar")}</button><button type="button" className="install-prompt-close" aria-label={t("Fechar aviso de instalação")} onClick={() => {setInstallDismissed(true); localStorage.setItem("listora-install-dismissed","1");}}><X size={18}/></button></aside>}
+      {!isStandalone && !installDismissed && <aside className="install-prompt-banner install-prompt-banner-rich" role="region" aria-label={t("Instalar Listora")}><div className="install-prompt-rich-main"><div className="install-prompt-rich-icon"><ShoppingBasket size={43}/></div><div className="install-prompt-rich-copy"><strong>{t("Instala a Listora")}</strong><span>{t("Acede às tuas listas diretamente no telemóvel, com mais rapidez e funcionalidades.")}</span></div><button type="button" className="install-prompt-action install-prompt-rich-action" onClick={installApp}><Download size={20}/><span>{(/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) ? t("Como instalar") : t("Instalar agora")}</span><ArrowRight size={18}/></button><button type="button" className="install-prompt-close install-prompt-rich-close" aria-label={t("Fechar aviso de instalação")} onClick={() => {setInstallDismissed(true); localStorage.setItem("listora-install-dismissed","1");}}><X size={20}/></button></div><div className="install-prompt-benefits"><div><span className="install-benefit-icon install-benefit-speed"><Zap size={21}/></span><span>{t("Mais rápido")}</span></div><div><span className="install-benefit-icon install-benefit-home"><Smartphone size={21}/></span><span>{t("Sempre à mão")}</span></div><div><span className="install-benefit-icon install-benefit-notifications"><Bell size={21}/></span><span>{t("Notificações")}</span></div></div></aside>}
       <header className="topbar refined-topbar">
         <div className="refined-brand">
           <span className="brand-mark"><ShoppingBasket size={24}/></span>
