@@ -97,6 +97,8 @@ export default function App() {
   const [receiptNeedsName, setReceiptNeedsName] = useState(false);
   const channelRef = useRef(null);
   const [list, setList] = useState(null);
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const [isStandalone, setIsStandalone] = useState(() => window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true);
   const displayListName = list && ["Compras da família", "Family shopping", "Compra familiar"].includes(list.name) ? t("Compras da família") : list?.name;
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -154,6 +156,27 @@ export default function App() {
       .finally(() => alive && setLoading(false));
     return () => { alive = false; };
   }, [listCode]);
+
+  useEffect(() => {
+    const onInstallAvailable = (event) => { event.preventDefault(); setInstallPrompt(event); };
+    const onInstalled = () => { setInstallPrompt(null); setIsStandalone(true); };
+    window.addEventListener("beforeinstallprompt", onInstallAvailable);
+    window.addEventListener("appinstalled", onInstalled);
+    return () => { window.removeEventListener("beforeinstallprompt", onInstallAvailable); window.removeEventListener("appinstalled", onInstalled); };
+  }, []);
+
+  async function installApp() {
+    if (!installPrompt) { notify("Para instalar, abre o menu do navegador e escolhe ‘Instalar aplicação’ ou ‘Adicionar ao ecrã principal’."); return; }
+    installPrompt.prompt();
+    await installPrompt.userChoice;
+    setInstallPrompt(null);
+  }
+
+  function leaveCurrentList() {
+    if (!window.confirm(t("Sair desta lista neste dispositivo? A lista partilhada não será apagada."))) return;
+    localStorage.removeItem("lista-familia-code");
+    setListCode(""); setList(null); setItems([]); setReceipts([]); setActiveTab("shopping"); setJoinCode(""); setError("");
+  }
 
   useEffect(() => {
     if (!listCode || !list || !isSupabaseConfigured) return;
@@ -739,7 +762,7 @@ export default function App() {
         <div className="receipt-list-heading"><h2>{t("Faturas partilhadas")}</h2><span>{receipts.length} {receipts.length === 1 ? "fatura" : "faturas"}</span></div>
         {receipts.length === 0 ? <div className="empty-state"><span className="empty-illustration">🧾</span><h3>{t("Ainda não há faturas")}</h3><p>Adiciona o primeiro comprovativo para ficar disponível a toda a família.</p></div> : <div className="receipt-list">{receipts.map(receipt => <article className="receipt-card" key={receipt.id}><div className="receipt-card-icon"><Receipt size={21}/></div><div className="receipt-card-main"><strong>{receipt.storeName}</strong><span>{new Date(receipt.purchasedAt + "T12:00:00").toLocaleDateString("pt-PT")} · {receipt.memberName || "Membro"}</span>{receipt.notes && <p>{receipt.notes}</p>}</div><div className="receipt-card-side"><strong>{Number(receipt.total).toLocaleString("pt-PT",{style:"currency",currency:"EUR"})}</strong>{receipt.filePath && <button type="button" onClick={() => openReceipt(receipt)} aria-label="Abrir comprovativo"><ExternalLink size={17}/></button>}<button type="button" onClick={() => removeReceipt(receipt)} aria-label="Apagar fatura"><Trash2 size={16}/></button></div></article>)}</div>}
       </section>}
-      <footer className="app-footer"><span><Leaf size={15}/> {t("Menos esquecimentos, mais tempo juntos.")}</span><button onClick={() => { if (window.confirm(t("Sair desta lista neste dispositivo? A lista partilhada não será apagada."))) { localStorage.removeItem("lista-familia-code"); setListCode(""); setList(null); setItems([]); } }}>{t("Sair da lista")}</button></footer>
+      <footer className="app-footer"><span><Leaf size={15}/> {t("Menos esquecimentos, mais tempo juntos.")}</span><button onClick={leaveCurrentList}>{t("Sair da lista")} / Criar nova</button></footer>
       {importPreview.length > 0 && <div className="modal-backdrop" onClick={() => !importBusy && setImportPreview([])}><section className="share-modal import-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="import-title"><button className="modal-close" onClick={() => !importBusy && setImportPreview([])} aria-label={t("Fechar")}><X size={20}/></button><div className="share-graphic"><ShoppingBasket size={28}/></div><h2 id="import-title">{t("Confirmar produtos")}</h2><p>{importSource === "photo" ? "Revê os produtos reconhecidos na fotografia." : "Revê os produtos reconhecidos por voz."} Podes corrigir os nomes e quantidades antes de adicionar.</p><div className="import-preview-list">{importPreview.map((item, index) => <div className="import-preview-row" key={index}><input aria-label={`Produto ${index + 1}`} value={item.name} maxLength={100} onChange={e => editPreviewItem(index, { name: e.target.value })}/><input aria-label={`Quantidade de ${item.name}`} type="number" min="1" max="999" value={item.quantity} onChange={e => editPreviewItem(index, { quantity: e.target.value })}/><button type="button" aria-label={`Remover ${item.name}`} onClick={() => setImportPreview(previous => previous.filter((_, i) => i !== index))}><X size={17}/></button></div>)}</div>{importError && <p className="error-message">{importError}</p>}<button className="primary-button" disabled={importBusy || !importPreview.some(item => item.name.trim())} onClick={confirmImport}>{importBusy ? <LoaderCircle className="spin" size={17}/> : <Check size={17}/>} {importBusy ? "A adicionar…" : `Adicionar ${importPreview.length} produtos`}</button><button className="secondary-button" disabled={importBusy} onClick={() => setImportPreview([])}>{t("Cancelar")}</button></section></div>}
       {showShare && <div className="modal-backdrop" onClick={() => setShowShare(false)}><section className="share-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="share-title"><button className="modal-close" onClick={() => setShowShare(false)} aria-label={t("Fechar")}><X size={20}/></button><div className="share-graphic"><Users size={28}/></div><h2 id="share-title">{t("A lista é melhor em família")}</h2><p>{t("Mostra este QR Code a quem queres convidar. Ao digitalizar, o convite abre a Listora com esta lista pronta a entrar.")}</p><div className="invite-qr"><QRCodeSVG value={inviteUrl} size={208} level="H" includeMargin/><span>{t("Digitaliza com a câmara para entrar na lista")}</span></div><button className="primary-button" onClick={copyInviteLink}><Copy size={17}/> Copiar link de convite</button><div className="share-code-box"><span>{t("CÓDIGO DA LISTA")}</span><strong>{list.shareCode}</strong></div><button className="primary-button" onClick={shareListCode}>{typeof navigator.share === "function" ? <Users size={17}/> : <Copy size={17}/>} {t(typeof navigator.share === "function" ? "Partilhar código" : "Copiar código")}</button>{typeof navigator.share === "function" && <button className="secondary-button" onClick={copyListCode}><Clipboard size={17}/> {t("Copiar apenas o código")}</button>}<p className="share-note"><CircleHelp size={14}/> {t("Qualquer pessoa com o código pode aceder à lista. Partilha apenas com pessoas de confiança.")}</p></section></div>}
       {toast && <div className="toast"><Check size={16}/>{toast}</div>}
