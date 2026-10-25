@@ -649,3 +649,9 @@
 .discover-footer-link{font-size:11px;padding:3px}
 @media(max-width:560px){.welcome-page{padding:20px 17px 24px}.welcome-top-actions{gap:7px}.discover-nav-link{font-size:11px;gap:4px}.discover-content{margin-top:24px}.discover-back{margin-bottom:20px}.discover-content>h1{font-size:clamp(32px,9vw,43px);letter-spacing:-1.3px}.discover-intro{font-size:14px;line-height:1.7}.discover-feature-grid{grid-template-columns:1fr;gap:12px}.discover-feature{padding:15px}.discover-art{height:135px;margin-bottom:15px}.discover-feature h2{font-size:18px}.discover-feature p{font-size:13px}.discover-ai-note{padding:15px;gap:11px}.discover-bottom-cta{padding:24px 16px}}
 
+
+
+.discover-share-link{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid #dfe7d9;background:#fffefa;color:var(--green);font:inherit;font-size:12px;font-weight:750;cursor:pointer;padding:8px 10px;border-radius:10px;white-space:nowrap}
+.discover-share-link:hover{background:var(--mint)}
+.welcome-footer .discover-footer-link{display:inline-flex;align-items:center;gap:5px}
+@media(max-width:560px){.welcome-top-actions{gap:5px}.discover-share-link{font-size:11px;padding:8px 7px;gap:4px}.discover-nav-link{font-size:11px}}
