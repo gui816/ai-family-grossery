@@ -337,3 +337,8 @@
 .receipt-name-prompt small{font-size:11px;color:#7a6c5d;line-height:1.45}
 .receipt-name-prompt .secondary-button{align-self:flex-start}
 .receipt-ai-progress{display:flex;align-items:center;gap:8px}
+
+
+/* Visible navigation actions for install and switching lists. */
+.install-app-button,.list-menu-button{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid #d5dfd0;border-radius:12px;padding:9px 11px;background:#fffdf8;color:#315c3b;font:600 13px 'DM Sans',sans-serif;white-space:nowrap;cursor:pointer}.install-app-button{background:#426b46;color:#fff;border-color:#426b46}.list-menu-button:hover,.install-app-button:hover{filter:brightness(.97)}
+@media(max-width:560px){.topbar-actions{gap:5px}.install-app-button,.list-menu-button{padding:8px;font-size:12px}.install-app-button svg,.list-menu-button svg{width:14px;height:14px}}
