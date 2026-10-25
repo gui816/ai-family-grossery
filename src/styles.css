@@ -498,3 +498,23 @@
 .art-market-row i{display:grid;place-items:center;width:19px;height:19px;border:1.5px solid #cbd6c5;border-radius:6px;font-size:11px;font-style:normal}
 .art-market-row.done{color:#8a9486;text-decoration:line-through}.art-market-row.done i{background:#285b3b;border-color:#285b3b;color:#fff}
 @media(max-width:400px){.onboarding-art{height:220px;margin-bottom:18px}.art-capture{padding:0 4px}.art-paper-list{width:34%;padding:9px 6px}.art-paper-list span{font-size:9px}.art-phone-list{width:44%;padding:8px 6px}.art-voice-pill{left:6%;right:6%}}
+
+
+/* Compact image and voice actions beside the product input */
+.add-main{gap:9px}
+.add-import-tools{display:flex;align-items:center;gap:7px;flex:0 0 auto}
+.add-photo-tool{position:relative;display:flex;align-items:center}
+.add-tool-button{width:40px;height:40px;display:grid;place-items:center;border:1px solid #dbe5d5;border-radius:13px;background:#e5efdf;color:#315b3b;padding:0;transition:background .15s,border-color .15s,transform .15s}
+.add-tool-button:hover:not(:disabled){background:#dbe9d4;border-color:#b6cdae}
+.add-tool-button:active:not(:disabled){transform:scale(.96)}
+.add-tool-button.add-tool-voice{background:#f8ead9;border-color:#f0dfc9;color:#8a572c}
+.add-tool-button.add-tool-voice:hover:not(:disabled){background:#f3dfc5;border-color:#e6c69f}
+.add-tool-button:disabled{opacity:.5;cursor:wait}
+.add-tool-button.recording{background:#fff0eb;border-color:#e8a18e;color:#a23e2b;animation:voice-pulse 1.2s ease-in-out infinite}
+.add-import-hint{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:5px;margin:3px 0 8px;padding:7px 8px;border-radius:10px;background:#f7f9f3;color:#76816f;font-size:10px;line-height:1.4;text-align:center}
+.add-import-hint svg{flex:0 0 auto;color:#5c7d56}
+.add-hint-dot{color:#bdc7b7;padding:0 1px}
+.add-panel .photo-source-menu{top:calc(100% + 7px);left:auto;right:0;width:225px}
+.add-panel .ai-import-status{margin:4px 0 7px}
+@keyframes voice-pulse{50%{box-shadow:0 0 0 4px #f8e4d9}}
+@media(max-width:390px){.add-import-tools{gap:5px}.add-tool-button{width:36px;height:36px;border-radius:11px}.add-tool-button svg{width:18px;height:18px}.add-main{gap:7px}.add-import-hint{font-size:9px;gap:4px;padding:6px 4px}}
