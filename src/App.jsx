@@ -111,7 +111,11 @@ export default function App() {
   const [shoppingMode, setShoppingMode] = useState(false);
   const [templates, setTemplates] = useState(() => { try { return JSON.parse(localStorage.getItem("lista-familia-templates") || "[]"); } catch { return []; } });
   const [itemHistory, setItemHistory] = useState(() => { try { return JSON.parse(localStorage.getItem("lista-familia-item-history") || "[]"); } catch { return []; } });
-  const [joinCode, setJoinCode] = useState(() => (new URLSearchParams(window.location.search).get("join") || localStorage.getItem("lista-familia-code") || "").toUpperCase());
+  const initialInviteCode = new URLSearchParams(window.location.search).get("join") || "";
+  const [joinCode, setJoinCode] = useState(() => (initialInviteCode || localStorage.getItem("lista-familia-code") || "").toUpperCase());
+  const [inviteList, setInviteList] = useState(null);
+  const [inviteLookupBusy, setInviteLookupBusy] = useState(false);
+  const [inviteDismissed, setInviteDismissed] = useState(false);
   const [listName, setListName] = useState(() => tx("Compras da família", language));
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
@@ -156,6 +160,14 @@ export default function App() {
       .finally(() => alive && setLoading(false));
     return () => { alive = false; };
   }, [listCode]);
+
+  useEffect(() => {
+    if (!initialInviteCode || !isSupabaseConfigured) return;
+    let active = true;
+    setInviteLookupBusy(true);
+    supabase.rpc("get_family_list", { p_share_code: initialInviteCode.toUpperCase() }).then(({ data, error: lookupError }) => { if (active && !lookupError && data?.list) setInviteList(data.list); }).catch(() => {}).finally(() => { if (active) setInviteLookupBusy(false); });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     const onInstallAvailable = (event) => { event.preventDefault(); setInstallPrompt(event); };
@@ -643,16 +655,17 @@ export default function App() {
         <div className="eyebrow"><Leaf size={15}/> {t("MAIS SIMPLES, JUNTOS")}</div>
         <h1>{t("As compras da família.")}<br/><span>{t("Sem esquecimentos.")}</span></h1>
         <p className="welcome-copy">{t("Uma lista partilhada, sempre atualizada. Adiciona o que falta em casa e deixa o resto connosco.")}</p>
-        <div className="welcome-card">
+        {initialInviteCode && !inviteDismissed && <section className="invite-confirmation" aria-live="polite"><div className="invite-confirmation-icon"><Users size={22}/></div><div className="invite-confirmation-copy"><span className="invite-eyebrow">CONVITE PARA UMA LISTA</span><h2>{inviteLookupBusy ? "A verificar o convite…" : inviteList ? `Foste convidado para «${inviteList.name}»` : "Foste convidado para uma lista partilhada"}</h2><p>{inviteList ? "Queres entrar nesta lista e partilhar as compras com a família?" : "O código do convite já está preenchido. Confirma o teu nome para entrar."}</p></div><button type="button" className="invite-dismiss-button" onClick={() => { setInviteDismissed(true); setJoinCode(""); setInviteList(null); window.history.replaceState({}, "", window.location.pathname); }}>Não, obrigado</button></section>}
+        <div className={`welcome-card ${initialInviteCode && !inviteDismissed ? "invite-mode" : ""}`}>
           <div className="card-heading"><span className="card-icon"><Plus size={19}/></span><div><h2>{t("Criar uma lista nova")}</h2><p>{t("Começa uma lista e convida a família.")}</p></div></div>
-          <form onSubmit={createList} className="create-form">
+          <form onSubmit={createList} className={`create-form ${initialInviteCode && !inviteDismissed ? "create-form-secondary" : ""}`}>
             <label htmlFor="member-name">O teu nome</label><input id="member-name" value={memberNameInput} onChange={e => setMemberNameInput(e.target.value)} maxLength={60} placeholder="Ex.: Guilherme" required autoComplete="name"/>
             <label htmlFor="list-name">{t("Nome da lista")}</label>
             <input id="list-name" value={listName} onChange={e => setListName(e.target.value)} maxLength={60} placeholder={t("Compras da família")}/>
             <button className="primary-button" disabled={loading} type="submit">{loading ? t("A criar…") : t("Criar lista")} <ArrowRight size={18}/></button>
           </form>
           <div className="form-divider"><span>{t("ou")}</span></div>
-          <form onSubmit={joinList} className="join-form">
+          <form onSubmit={joinList} className={`join-form ${initialInviteCode && !inviteDismissed ? "join-form-invited" : ""}`}>
             <label htmlFor="member-name-join">O teu nome</label><input id="member-name-join" value={memberNameInput} onChange={e => setMemberNameInput(e.target.value)} maxLength={60} placeholder="Ex.: Guilherme" required autoComplete="name"/>
             <label htmlFor="join-code">{t("Já tens um código de partilha?")}</label>
             <div className="join-row"><input id="join-code" value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase())} placeholder={t("Ex.: A3K9PX")} maxLength={12}/><button aria-label={t("Entrar na lista")} type="submit" className="join-button"><ArrowRight size={20}/></button></div>
