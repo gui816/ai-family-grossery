@@ -832,8 +832,37 @@ export default function App() {
         <section className="share-modal onboarding-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
           <button type="button" className="modal-close" onClick={() => { setShowOnboarding(false); localStorage.setItem("listora-onboarding-v1-complete", "1"); }} aria-label={t("Fechar introdução")}><X size={20}/></button>
           <div className="onboarding-progress" aria-label={t("Passo")}><span style={{width: `${((onboardingStep + 1) / 5) * 100}%`}}/></div>
-          <div className="onboarding-illustration">
-            {onboardingStep === 0 ? <ShoppingBasket size={32}/> : onboardingStep === 1 ? <Plus size={32}/> : onboardingStep === 2 ? <Camera size={32}/> : onboardingStep === 3 ? <Users size={32}/> : <ShoppingBasket size={32}/>}
+          <div className={`onboarding-art onboarding-art-step-${onboardingStep}`} aria-hidden="true">
+            {onboardingStep === 0 && <div className="art-shared-list">
+              <div className="art-list-top"><span className="art-mini-basket"><ShoppingBasket size={18}/></span><span><strong>Compras da família</strong><small>Sincronizada agora</small></span><span className="art-sync-dot">✓</span></div>
+              <div className="art-product-row"><span className="art-product-emoji">🥛</span><span>Leite</span><span className="art-check">✓</span></div>
+              <div className="art-product-row"><span className="art-product-emoji">🍞</span><span>Pão</span><span className="art-check">✓</span></div>
+              <div className="art-product-row art-row-muted"><span className="art-product-emoji">🍌</span><span>Bananas</span><span className="art-check">✓</span></div>
+              <div className="art-member-bubbles"><span>G</span><span>M</span><span>+</span><small>Lista partilhada</small></div>
+            </div>}
+            {onboardingStep === 1 && <div className="art-add-products">
+              <div className="art-input-mock"><span>O que falta em casa?</span><span className="art-add-circle"><Plus size={18}/></span></div>
+              <div className="art-quick-chips"><span>＋ Leite</span><span>＋ Pão</span><span>＋ Água</span></div>
+              <div className="art-added-product"><span>🥑</span><strong>Abacates</strong><span className="art-add-circle"><Check size={15}/></span></div>
+              <div className="art-added-product"><span>🧀</span><strong>Queijo</strong><span className="art-add-circle"><Check size={15}/></span></div>
+            </div>}
+            {onboardingStep === 2 && <div className="art-capture">
+              <div className="art-paper-list"><strong>Lista de compras</strong>{["Leite","Pão","Ovos","Bananas","Fraldas"].map(product => <span key={product}><i/> {product}</span>)}</div>
+              <div className="art-scan-arrow">➜</div>
+              <div className="art-phone-list"><div className="art-phone-camera"><Camera size={20}/></div><strong>Produtos encontrados</strong>{["Leite","Pão","Ovos","Bananas"].map(product => <span key={product}><i>✓</i>{product}</span>)}<small>4 produtos prontos</small></div>
+              <div className="art-voice-pill"><Mic size={15}/><span>“Leite, pão e ovos”</span><b>▂▅▃▇▅</b></div>
+            </div>}
+            {onboardingStep === 3 && <div className="art-sharing">
+              <div className="art-avatar-stack"><span>G</span><span>M</span><span>A</span><span>+</span></div>
+              <strong>A lista é melhor em família</strong><small>Todos podem atualizar a mesma lista</small>
+              <div className="art-invite-link"><span><Users size={17}/></span><span><b>Convite para a lista</b><small>listora.app/join/••••</small></span><Check size={18}/></div>
+              <div className="art-live-update"><span className="art-live-dot"/> Madalena adicionou iogurtes <span>agora</span></div>
+            </div>}
+            {onboardingStep === 4 && <div className="art-supermarket">
+              <div className="art-market-head"><span><ShoppingBasket size={19}/></span><strong>Modo supermercado</strong><small>2 de 4</small></div>
+              <div className="art-market-progress"><span/></div>
+              {[["🥛","Leite",true],["🍞","Pão",true],["🍎","Maçãs",false],["🧻","Papel higiénico",false]].map(([emoji,product,done]) => <div className={done ? "art-market-row done" : "art-market-row"} key={product}><span>{emoji}</span><span>{product}</span><i>{done ? "✓" : ""}</i></div>)}
+            </div>}
           </div>
           <span className="onboarding-step-label">{t("DESCOBRE A LISTORA")} · {onboardingStep + 1}/5</span>
           <h2 id="onboarding-title">{t([
