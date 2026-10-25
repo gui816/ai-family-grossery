@@ -655,3 +655,19 @@
 .discover-share-link:hover{background:var(--mint)}
 .welcome-footer .discover-footer-link{display:inline-flex;align-items:center;gap:5px}
 @media(max-width:560px){.welcome-top-actions{gap:5px}.discover-share-link{font-size:11px;padding:8px 7px;gap:4px}.discover-nav-link{font-size:11px}}
+
+
+/* Landing page navigation and prominent Discover entry */
+.welcome-home-brand{display:inline-flex;align-items:center;gap:10px;padding:0;border:0;background:transparent;color:inherit;font:inherit;font-size:25px;font-weight:850;letter-spacing:-1px;cursor:pointer;text-align:left;white-space:nowrap}
+.welcome-home-brand .brand-mark{flex-shrink:0}
+.welcome-home-brand:focus-visible{outline:3px solid #9ab99a;outline-offset:5px;border-radius:12px}
+.welcome-discover-card{width:100%;display:flex;align-items:center;gap:14px;text-align:left;padding:17px 18px;margin:22px 0 24px;border:1px solid #b9d0b1;border-radius:20px;background:linear-gradient(110deg,#e6f0df 0%,#f7f6ed 100%);color:#315b3c;box-shadow:0 8px 24px #315b3c12;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.welcome-discover-card:hover{transform:translateY(-2px);border-color:#83a982;box-shadow:0 12px 28px #315b3c1c}
+.welcome-discover-card:focus-visible{outline:3px solid #8eae87;outline-offset:3px}
+.welcome-discover-icon{width:49px;height:49px;flex:0 0 49px;display:grid;place-items:center;border-radius:15px;background:#416b49;color:#fff}
+.welcome-discover-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:5px}
+.welcome-discover-copy strong{font-size:15px;line-height:1.35;font-weight:800;color:#2f5035}
+.welcome-discover-copy small{font-size:12px;line-height:1.5;color:#657663}
+.welcome-discover-arrow{flex:0 0 auto;color:#416b49}
+@media(max-width:560px){.welcome-home-brand{font-size:23px;gap:8px}.welcome-top-actions{gap:5px}.discover-share-link{font-size:11px;padding:8px 7px;white-space:normal;line-height:1.25;max-width:154px}.welcome-discover-card{padding:15px 13px;gap:11px;margin:19px 0 22px}.welcome-discover-icon{width:43px;height:43px;flex-basis:43px}.welcome-discover-copy strong{font-size:14px}.welcome-discover-copy small{font-size:11px}.welcome-discover-arrow{width:18px}}
+@media(prefers-reduced-motion:reduce){.welcome-discover-card{transition:none}.welcome-discover-card:hover{transform:none}}
