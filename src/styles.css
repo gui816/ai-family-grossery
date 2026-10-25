@@ -539,3 +539,29 @@
 /* Invitation prompt: compact, balanced on mobile and no narrow text column. */
 .invite-confirmation{grid-template-columns:44px minmax(0,1fr);align-items:center;gap:10px 12px;margin:0 0 14px;padding:13px 14px;border-radius:16px;box-shadow:0 4px 14px #315c3b0a}.invite-confirmation-icon{width:38px;height:38px;border-radius:11px}.invite-confirmation-icon svg{width:20px;height:20px}.invite-confirmation-copy{min-width:0}.invite-confirmation-copy h2{margin:2px 0 4px;font-size:16px;line-height:1.22;overflow-wrap:anywhere}.invite-confirmation-copy p{font-size:12px;line-height:1.35}.invite-eyebrow{font-size:9px;letter-spacing:.08em}.invite-actions{grid-column:1/-1;display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:0}.invite-actions .invite-accept-button{min-height:38px;padding:8px 15px;font-size:13px}.invite-actions .invite-dismiss-button{font-size:12px}
 @media(max-width:560px){.invite-confirmation{grid-template-columns:36px minmax(0,1fr);gap:8px 10px;padding:12px}.invite-confirmation-icon{width:34px;height:34px;border-radius:10px}.invite-confirmation-copy h2{font-size:15px;line-height:1.2}.invite-confirmation-copy p{font-size:12px;line-height:1.3}.invite-actions{justify-content:flex-start;padding-left:44px;gap:14px}.invite-actions .invite-accept-button{min-height:36px;padding:7px 13px}}
+
+
+/* Voice recording feedback modal */
+.voice-modal-backdrop{z-index:40;backdrop-filter:blur(3px)}
+.voice-modal{padding:34px 25px 24px}
+.voice-modal-icon{width:78px;height:78px;margin:0 auto 16px;border-radius:26px;display:grid;place-items:center;background:#e5eee0;color:#315536}
+.voice-modal-icon.is-listening{animation:voice-icon-pulse 1.8s ease-in-out infinite}
+.voice-modal-icon.is-processing{background:#f5ead9;color:#986a32}
+.voice-status-pill{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11px;font-weight:700;margin:0 auto 14px;background:#eaf3e6;color:#315536}
+.voice-status-pill.processing{background:#f7efdf;color:#936a32}
+.voice-status-dot{width:7px;height:7px;border-radius:50%;background:#4b8951}
+.voice-status-pill.active .voice-status-dot{animation:voice-dot-pulse 1.2s ease-in-out infinite}
+.voice-modal h2{margin:0 0 9px}
+.voice-modal>p{font-size:13px;line-height:1.6}
+.voice-example{display:flex;flex-direction:column;gap:7px;text-align:left;padding:15px;border-radius:14px;background:#f4f6ef;border:1px solid #e6eadf;margin:18px 0}
+.voice-example span{font-size:10px;text-transform:uppercase;letter-spacing:1px;font-weight:700;color:#858d7e}
+.voice-example strong{font-size:13px;line-height:1.5;color:#344b35;font-weight:600}
+.voice-wave{height:34px;display:flex;align-items:center;justify-content:center;gap:4px;margin:14px 0 18px}
+.voice-wave span{width:4px;height:10px;border-radius:99px;background:#4d7950;animation:voice-wave 850ms ease-in-out infinite alternate}
+.voice-wave span:nth-child(2n){animation-delay:150ms}.voice-wave span:nth-child(3n){animation-delay:300ms}.voice-wave span:nth-child(4n){animation-delay:450ms}
+.voice-stop-button{margin-top:0;background:#315536}
+.voice-processing-note{display:flex;align-items:center;justify-content:center;gap:8px;margin:18px 0 3px;color:#426b46;font-size:12px;font-weight:600}
+@keyframes voice-wave{from{height:7px;opacity:.55}to{height:29px;opacity:1}}
+@keyframes voice-icon-pulse{0%,100%{box-shadow:0 0 0 0 #82a97b00}50%{box-shadow:0 0 0 10px #82a97b28}}
+@keyframes voice-dot-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@media(prefers-reduced-motion:reduce){.voice-modal-icon.is-listening,.voice-status-pill.active .voice-status-dot,.voice-wave span{animation:none}}
