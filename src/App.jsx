@@ -145,7 +145,10 @@ export default function App() {
     if (browserLanguage.startsWith("zh")) return "zh-CN";
     return LANGUAGE_OPTIONS.find(([code]) => browserLanguage.startsWith(code.toLowerCase().split("-")[0]))?.[0] || "pt-PT";
   });
-  const t = (text, params) => {\n    const translated = tx(text, language);\n    return params ? translated.replace(/\\{(\\w+)\\}/g, (match, key) => params[key] === undefined ? match : String(params[key])) : translated;\n  };
+  const t = (text, params) => {
+    const translated = tx(text, language);
+    return params ? translated.replace(/\{(\w+)\}/g, (match, key) => params[key] === undefined ? match : String(params[key])) : translated;
+  };
   useEffect(() => { localStorage.setItem("lista-familia-language", language); }, [language]);
 
   const [listCode, setListCode] = useState(() => (new URLSearchParams(window.location.search).get("join") || new URLSearchParams(window.location.search).get("list") || localStorage.getItem("lista-familia-code") || "").toUpperCase());
