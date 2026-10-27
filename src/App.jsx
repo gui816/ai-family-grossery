@@ -742,7 +742,7 @@ export default function App() {
       });
       const base64 = dataUrl.split(",")[1];
       const { data, error: invokeError } = await supabase.functions.invoke("listora-receipt-extract", {
-        body: { mimeType: file.type, fileData: base64 }
+        body: { mimeType: file.type, fileData: base64, language }
       });
       if (invokeError) {
         const detail = await invokeError.context?.json?.().catch(() => null);
