@@ -103,7 +103,7 @@ export default function App() {
   const channelRef = useRef(null);
   const [list, setList] = useState(null);
   const [installPrompt, setInstallPrompt] = useState(null);
-  const [installDismissed, setInstallDismissed] = useState(() => localStorage.getItem("listora-install-dismissed") === "1");
+  const [installDismissed, setInstallDismissed] = useState(() => localStorage.getItem("listora-install-dismissed") === "1" || localStorage.getItem("listora-installed") === "1");
   const [isStandalone, setIsStandalone] = useState(() => window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true);
   const displayListName = list && ["Compras da família", "Family shopping", "Compra familiar"].includes(list.name) ? t("Compras da família") : list?.name;
   const [items, setItems] = useState([]);
@@ -262,6 +262,7 @@ export default function App() {
       setInstallPrompt(null);
       setIsStandalone(true);
       setInstallDismissed(true);
+      localStorage.setItem("listora-installed", "1");
       localStorage.setItem("listora-install-dismissed", "1");
     };
     const standaloneQuery = window.matchMedia?.("(display-mode: standalone)");
@@ -302,6 +303,9 @@ export default function App() {
       const choice = await installPrompt.userChoice;
       if (choice?.outcome === "accepted") {
         setInstallPrompt(null);
+        setInstallDismissed(true);
+        localStorage.setItem("listora-installed", "1");
+        localStorage.setItem("listora-install-dismissed", "1");
       } else {
         // The prompt event is single-use; wait for a new event before offering it again.
         setInstallPrompt(null);
