@@ -575,13 +575,13 @@ export default function App() {
       };
       recognition.onnomatch = () => { setImportError(t("Não percebemos os produtos ditos. Tenta falar um pouco mais devagar.")); };
       recognition.onend = () => {
-        // The recording has ended: never leave the listening modal showing a microphone setup state.
+        // Keep the microphone action in its idle state once speech recognition ends.
         setListening(false);
        
       };
       recognition.onresult = async event => {
         const transcript = event.results?.[0]?.[0]?.transcript?.trim();
-        // Close the recording UI before starting AI interpretation. The next visible state is the product preview.
+        // Stop the inline listening indicator before interpreting the transcript.
         setListening(false);
        
         if (!transcript) { setImportError(t("Não foi detetada voz. Tenta novamente.")); return; }
