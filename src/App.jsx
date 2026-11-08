@@ -576,9 +576,16 @@ export default function App() {
         setImportError(message);
       };
       recognition.onnomatch = () => { setImportError(t("Não percebemos os produtos ditos. Tenta falar um pouco mais devagar.")); };
-      recognition.onend = () => setListening(false);
+      recognition.onend = () => {
+        // The recording has ended: never leave the listening modal showing a microphone setup state.
+        setListening(false);
+        setVoiceModalOpen(false);
+      };
       recognition.onresult = async event => {
         const transcript = event.results?.[0]?.[0]?.transcript?.trim();
+        // Close the recording UI before starting AI interpretation. The next visible state is the product preview.
+        setListening(false);
+        setVoiceModalOpen(false);
         if (!transcript) { setImportError(t("Não foi detetada voz. Tenta novamente.")); return; }
         setImportBusy(true); setImportSource("voice"); setImportError("");
         try {
@@ -591,6 +598,7 @@ export default function App() {
       recognition.start();
     } catch {
       setListening(false);
+      setVoiceModalOpen(false);
       setImportError("Não foi possível iniciar o microfone neste dispositivo.");
     }
   }
@@ -1009,7 +1017,7 @@ export default function App() {
           {listening && <button type="button" className="primary-button voice-stop-button" onClick={() => { recognitionRef.current?.stop(); setListening(false); setVoiceModalOpen(false); }}><X size={17}/>{t("Parar gravação")}</button>}
         </section>
       </div>}
-      {importPreview.length > 0 && <div className="modal-backdrop" onClick={() => !importBusy && setImportPreview([])}><section className="share-modal import-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="import-title"><button className="modal-close" onClick={() => !importBusy && setImportPreview([])} aria-label={t("Fechar")}><X size={20}/></button><div className="share-graphic"><ShoppingBasket size={28}/></div><h2 id="import-title">{t("Confirmar produtos")}</h2><p>{importSource === "photo" ? "Revê os produtos reconhecidos na fotografia." : "Revê os produtos reconhecidos por voz."} Podes corrigir os nomes e quantidades antes de adicionar.</p><div className="import-preview-list">{importPreview.map((item, index) => <div className="import-preview-row" key={index}><input aria-label={`Produto ${index + 1}`} value={item.name} maxLength={100} onChange={e => editPreviewItem(index, { name: e.target.value })}/><input aria-label={`Quantidade de ${item.name}`} type="number" min="1" max="999" value={item.quantity} onChange={e => editPreviewItem(index, { quantity: e.target.value })}/><button type="button" aria-label={`Remover ${item.name}`} onClick={() => setImportPreview(previous => previous.filter((_, i) => i !== index))}><X size={17}/></button></div>)}</div>{importError && <p className="error-message">{importError}</p>}<button className="primary-button" disabled={importBusy || !importPreview.some(item => item.name.trim())} onClick={confirmImport}>{importBusy ? <LoaderCircle className="spin" size={17}/> : <Check size={17}/>} {importBusy ? "A adicionar…" : `Adicionar ${importPreview.length} produtos`}</button><button className="secondary-button" disabled={importBusy} onClick={() => setImportPreview([])}>{t("Cancelar")}</button></section></div>}
+      {importPreview.length > 0 && <div className="modal-backdrop" onClick={() => !importBusy && setImportPreview([])}><section className="share-modal import-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="import-title"><button className="modal-close" onClick={() => !importBusy && setImportPreview([])} aria-label={t("Fechar")}><X size={20}/></button><div className="share-graphic"><ShoppingBasket size={28}/></div><h2 id="import-title">{t("Confirmar produtos")}</h2><p>{importSource === "photo" ? "Revê os produtos reconhecidos na fotografia." : "Revê os produtos reconhecidos por voz."} Podes corrigir os nomes e quantidades antes de adicionar.</p><div className="import-preview-list">{importPreview.map((item, index) => <div className="import-preview-row" key={index}><input aria-label={`Produto ${index + 1}`} value={item.name} maxLength={100} onChange={e => editPreviewItem(index, { name: e.target.value })}/><input aria-label={`Quantidade de ${item.name}`} type="number" min="1" max="999" value={item.quantity} onChange={e => editPreviewItem(index, { quantity: e.target.value })}/><button type="button" aria-label={`Remover ${item.name}`} onClick={() => setImportPreview(previous => previous.filter((_, i) => i !== index))}><X size={17}/></button></div>)}</div>{importError && <p className="error-message">{importError}</p>}<button className="primary-button" disabled={importBusy || !importPreview.some(item => item.name.trim())} onClick={confirmImport}>{importBusy ? <LoaderCircle className="spin" size={17}/> : <Check size={17}/>} {importBusy ? "A adicionar…" : `Adicionar ${importPreview.length} ${importPreview.length === 1 ? "produto" : "produtos"}`}</button><button className="secondary-button" disabled={importBusy} onClick={() => setImportPreview([])}>{t("Cancelar")}</button></section></div>}
       {showOnboarding && <div className="modal-backdrop onboarding-backdrop" onClick={() => { setShowOnboarding(false); localStorage.setItem("listora-onboarding-v3-complete", "1"); }}>
         <section className="share-modal onboarding-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
           <button type="button" className="modal-close" onClick={() => { setShowOnboarding(false); localStorage.setItem("listora-onboarding-v3-complete", "1"); }} aria-label={t("Fechar introdução")}><X size={20}/></button>
