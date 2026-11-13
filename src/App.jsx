@@ -209,7 +209,6 @@ export default function App() {
   const [importBusy, setImportBusy] = useState(false);
   const [importError, setImportError] = useState("");
   const [listening, setListening] = useState(false);
-  const [voiceModalOpen, setVoiceModalOpen] = useState(false);
   const imageInputRef = useRef(null);
   const imageFileInputRef = useRef(null);
   const imageCameraInputRef = useRef(null);
@@ -552,8 +551,7 @@ export default function App() {
       document.querySelector('input[placeholder*="produto"]')?.focus();
       return;
     }
-    if (listening) { recognitionRef.current?.stop(); setListening(false); setVoiceModalOpen(false); return; }
-    setVoiceModalOpen(true);
+    if (listening) { recognitionRef.current?.stop(); setListening(false); return; }
     try {
       // Let SpeechRecognition request microphone access itself. A separate getUserMedia prompt can consume the user gesture on Android.
       const recognition = new SpeechRecognition();
@@ -565,7 +563,7 @@ export default function App() {
       recognition.onstart = () => setListening(true);
       recognition.onerror = event => {
         setListening(false);
-        setVoiceModalOpen(false);
+       
         const message = event.error === "not-allowed" || event.error === "service-not-allowed"
           ? t("O acesso ao microfone foi recusado. Permite o microfone nas definições do navegador.")
           : event.error === "network"
@@ -577,15 +575,15 @@ export default function App() {
       };
       recognition.onnomatch = () => { setImportError(t("Não percebemos os produtos ditos. Tenta falar um pouco mais devagar.")); };
       recognition.onend = () => {
-        // The recording has ended: never leave the listening modal showing a microphone setup state.
+        // Keep the microphone action in its idle state once speech recognition ends.
         setListening(false);
-        setVoiceModalOpen(false);
+       
       };
       recognition.onresult = async event => {
         const transcript = event.results?.[0]?.[0]?.transcript?.trim();
-        // Close the recording UI before starting AI interpretation. The next visible state is the product preview.
+        // Stop the inline listening indicator before interpreting the transcript.
         setListening(false);
-        setVoiceModalOpen(false);
+       
         if (!transcript) { setImportError(t("Não foi detetada voz. Tenta novamente.")); return; }
         setImportBusy(true); setImportSource("voice"); setImportError("");
         try {
@@ -593,12 +591,12 @@ export default function App() {
           if (!itemsFound.length) throw new Error("Não foram identificados produtos na frase. Tenta novamente.");
           setImportPreview(itemsFound);
         } catch (err) { setImportError(err.message || "Não foi possível interpretar a voz."); }
-        finally { setImportBusy(false); setVoiceModalOpen(false); }
+        finally { setImportBusy(false); }
       };
       recognition.start();
     } catch {
       setListening(false);
-      setVoiceModalOpen(false);
+     
       setImportError("Não foi possível iniciar o microfone neste dispositivo.");
     }
   }
@@ -926,7 +924,7 @@ export default function App() {
       </section>
       <section className="add-panel" hidden={shoppingMode}>
         <form onSubmit={addItem}>
-          <div className="add-main"><button type="submit" className="input-plus add-submit-left" aria-label={t("Adicionar artigo")} disabled={!name.trim()}><Plus size={22}/></button><input list="item-history-suggestions" value={name} onChange={e => setName(e.target.value)} placeholder={t("Adicionar produto…")} aria-label={t("Nome do artigo")} maxLength={100}/><datalist id="item-history-suggestions">{suggestions.map(itemName => <option key={itemName} value={itemName}/>)}</datalist><div className="add-import-tools add-import-tools-inline" aria-label={t("Adicionar por imagem ou voz")}><div className="add-photo-tool"><button type="button" className="add-tool-button add-tool-photo" aria-label={t("Fotografar lista")} title={t("Fotografa uma lista para reconhecer os produtos")} aria-expanded={showPhotoSource} disabled={importBusy} onClick={() => setShowPhotoSource(v => !v)}><Camera size={19}/></button>{showPhotoSource && <div className="photo-source-menu"><button type="button" onClick={() => {setShowPhotoSource(false); imageCameraInputRef.current?.click();}}><Camera size={18}/><span><strong>{t("Abrir câmara")}</strong><small>{t("Fotografar uma lista de compras em papel, manuscrita ou num quadro.")}</small></span></button><button type="button" onClick={() => {setShowPhotoSource(false); imageFileInputRef.current?.click();}}><Upload size={18}/><span><strong>{t("Escolher da galeria")}</strong><small>{t("Escolher uma fotografia de uma lista de compras.")}</small></span></button></div>}</div><button type="button" className={listening ? "add-tool-button add-tool-voice recording" : "add-tool-button add-tool-voice"} aria-label={listening ? t("A ouvir… toca para parar") : t("Adicionar por voz")} title={t("Dita vários produtos sem escrever")} disabled={importBusy} onClick={startVoiceImport}><Mic size={19}/></button></div></div>
+          <div className="add-main"><button type="submit" className="input-plus add-submit-left" aria-label={t("Adicionar artigo")} disabled={!name.trim()}><Plus size={22}/></button><input list="item-history-suggestions" value={name} onChange={e => setName(e.target.value)} placeholder={t("Adicionar produto…")} aria-label={t("Nome do artigo")} maxLength={100}/><datalist id="item-history-suggestions">{suggestions.map(itemName => <option key={itemName} value={itemName}/>)}</datalist><div className="add-import-tools add-import-tools-inline" aria-label={t("Adicionar por imagem ou voz")}><div className="add-photo-tool"><button type="button" className="add-tool-button add-tool-photo" aria-label={t("Fotografar lista")} title={t("Fotografa uma lista para reconhecer os produtos")} aria-expanded={showPhotoSource} disabled={importBusy} onClick={() => setShowPhotoSource(v => !v)}><Camera size={19}/></button>{showPhotoSource && <div className="photo-source-menu"><button type="button" onClick={() => {setShowPhotoSource(false); imageCameraInputRef.current?.click();}}><Camera size={18}/><span><strong>{t("Abrir câmara")}</strong><small>{t("Fotografar uma lista de compras em papel, manuscrita ou num quadro.")}</small></span></button><button type="button" onClick={() => {setShowPhotoSource(false); imageFileInputRef.current?.click();}}><Upload size={18}/><span><strong>{t("Escolher da galeria")}</strong><small>{t("Escolher uma fotografia de uma lista de compras.")}</small></span></button></div>}</div><button type="button" className={listening ? "add-tool-button add-tool-voice recording" : "add-tool-button add-tool-voice"} aria-label={listening ? t("A ouvir… toca para parar") : t("Adicionar por voz")} title={t("Dita vários produtos sem escrever")} disabled={importBusy} onClick={startVoiceImport}><Mic size={19}/></button></div></div>{listening && <span className="voice-inline-status" role="status" aria-live="polite">A ouvir… toca novamente para parar</span>}{importBusy && importSource === "voice" && <span className="voice-inline-status" role="status" aria-live="polite">A identificar os produtos…</span>}
           <div className="quick-add-chips" aria-label={t("Sugestões rápidas")}>{(language === "pt-PT" ? ["Leite","Pão","Água"] : language === "en" ? ["Milk","Bread","Water"] : language === "es" ? ["Leche","Pan","Agua"] : language === "fr" ? ["Lait","Pain","Eau"] : language === "de" ? ["Milch","Brot","Wasser"] : language === "it" ? ["Latte","Pane","Acqua"] : language === "nl" ? ["Melk","Brood","Water"] : language === "pl" ? ["Mleko","Chleb","Woda"] : language === "ro" ? ["Lapte","Pâine","Apă"] : ["牛奶","面包","水"]).map(itemName => <button type="button" key={itemName} onClick={() => submitItem(itemName)}><Plus size={13}/>{itemName}</button>)}<button type="button" className="quick-add-other" onClick={() => {setShowOtherProducts(v => !v); setOtherProductSearch("");}}><Plus size={13}/>{t("Outros")}</button></div>
           
           {showOtherProducts && <section className="other-products-panel"><div className="other-products-heading"><div><strong>{t("Escolhe outros produtos")}</strong><small>{t("Toca num produto para o adicionar à lista.")}</small></div><button type="button" aria-label={t("Fechar")} onClick={() => setShowOtherProducts(false)}><X size={18}/></button></div><input className="other-products-search" value={otherProductSearch} onChange={e => setOtherProductSearch(e.target.value)} placeholder={t("Pesquisar produtos…")}/>{(language === "pt-PT" ? [{category:"Carne e peixe",items:["Ovos","Frango","Carne picada","Bifes","Costeletas","Salsichas","Fiambre","Bacon","Peixe","Salmão","Atum","Camarão"]},{category:"Pequeno-almoço e cereais",items:["Cereais","Muesli","Aveia","Granola","Iogurtes","Queijo","Manteiga","Margarina","Compota","Mel"]},{category:"Fruta e legumes",items:["Maçãs","Bananas","Laranjas","Tomates","Batatas","Cebolas","Alface","Cenouras","Brócolos","Abacates"]},{category:"Despensa",items:["Arroz","Massa","Farinha","Açúcar","Sal","Azeite","Óleo","Feijão","Grão","Lentilhas","Tomate em lata","Caldo"]},{category:"Congelados",items:["Legumes congelados","Pizza","Gelado","Batatas fritas congeladas"]},{category:"Casa e higiene",items:["Detergente da roupa","Detergente da loiça","Papel higiénico","Papel de cozinha","Champô","Pasta de dentes"]}] : language === "en" ? [{category:"Meat and fish",items:["Eggs","Chicken","Minced beef","Steak","Pork chops","Sausages","Ham","Bacon","Fish","Salmon","Tuna","Prawns"]},{category:"Breakfast and cereals",items:["Cereal","Muesli","Oats","Granola","Yogurt","Cheese","Butter","Margarine","Jam","Honey"]},{category:"Fruit and vegetables",items:["Apples","Bananas","Oranges","Tomatoes","Potatoes","Onions","Lettuce","Carrots","Broccoli","Avocados"]},{category:"Pantry",items:["Rice","Pasta","Flour","Sugar","Salt","Olive oil","Cooking oil","Beans","Chickpeas","Lentils","Canned tomatoes","Stock cubes"]},{category:"Frozen",items:["Frozen vegetables","Pizza","Ice cream","Frozen chips"]},{category:"Home and personal care",items:["Laundry detergent","Dish soap","Toilet paper","Kitchen roll","Shampoo","Toothpaste"]}] : [{category:t("Carne e peixe"),items:[t("Ovos"),t("Frango"),t("Carne picada"),t("Bifes"),t("Costeletas"),t("Salsichas"),t("Fiambre"),t("Bacon"),t("Peixe"),t("Salmão"),t("Atum"),t("Camarão")]},{category:t("Pequeno-almoço e cereais"),items:[t("Cereais"),t("Muesli"),t("Aveia"),t("Granola"),t("Iogurtes"),t("Queijo"),t("Manteiga"),t("Margarina"),t("Compota"),t("Mel")]},{category:t("Fruta e legumes"),items:[t("Maçãs"),t("Bananas"),t("Laranjas"),t("Tomates"),t("Batatas"),t("Cebolas"),t("Alface"),t("Cenouras"),t("Brócolos"),t("Abacates")]},{category:t("Despensa"),items:[t("Arroz"),t("Massa"),t("Farinha"),t("Açúcar"),t("Sal"),t("Azeite"),t("Óleo"),t("Feijão"),t("Grão"),t("Lentilhas"),t("Tomate em lata"),t("Caldo")]},{category:t("Congelados"),items:[t("Legumes congelados"),t("Pizza"),t("Gelado"),t("Batatas fritas congeladas")]},{category:t("Casa e higiene"),items:[t("Detergente da roupa"),t("Detergente da loiça"),t("Papel higiénico"),t("Papel de cozinha"),t("Champô"),t("Pasta de dentes")]}]).map(group => ({...group, items:group.items.filter(item => item.toLocaleLowerCase().includes(otherProductSearch.toLocaleLowerCase()))})).filter(group => group.items.length > 0).map(group => <div className="other-products-group" key={group.category}><strong>{group.category}</strong><div>{group.items.map(item => <button type="button" key={item} onClick={async () => {const added=await submitItem(item); if(added) setShowOtherProducts(false);}}><Plus size={13}/>{item}</button>)}</div></div>)}</section>}
@@ -1004,19 +1002,6 @@ export default function App() {
         {receipts.length === 0 ? <div className="empty-state"><span className="empty-illustration">🧾</span><h3>{t("Ainda não há faturas")}</h3><p>{t("Adiciona o primeiro comprovativo para ficar disponível a toda a família.")}</p></div> : <div className="receipt-list">{receipts.map(receipt => <article className="receipt-card" key={receipt.id}><div className="receipt-card-icon"><Receipt size={21}/></div><div className="receipt-card-main"><strong>{receipt.storeName}</strong><span>{new Date(receipt.purchasedAt + "T12:00:00").toLocaleDateString(language === "en" ? "en-GB" : language)} · {receipt.memberName || t("Membro")}</span>{receipt.notes && <p>{receipt.notes}</p>}</div><div className="receipt-card-side"><strong>{Number(receipt.total).toLocaleString(language === "en" ? "en-GB" : language,{style:"currency",currency:"EUR"})}</strong>{receipt.filePath && <button type="button" onClick={() => openReceipt(receipt)} aria-label={t("Abrir comprovativo")}><ExternalLink size={17}/></button>}<button type="button" onClick={() => removeReceipt(receipt)} aria-label={t("Apagar fatura")}><Trash2 size={16}/></button></div></article>)}</div>}
       </section>}
       <footer className="app-footer"><span><Leaf size={15}/> {t("Menos esquecimentos, mais tempo juntos.")}</span><button onClick={leaveCurrentList}>{t("Sair da lista")} / {t("Criar nova")}</button></footer>
-      {voiceModalOpen && (listening || (importBusy && importSource === "voice")) && <div className="modal-backdrop voice-modal-backdrop" onClick={() => { recognitionRef.current?.stop(); setListening(false); setVoiceModalOpen(false); }}>
-        <section className="share-modal voice-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="voice-modal-title">
-          <button type="button" className="modal-close" aria-label={t("Fechar")} onClick={() => { recognitionRef.current?.stop(); setListening(false); setVoiceModalOpen(false); }}><X size={20}/></button>
-          <div className="voice-status-row"><div className={"voice-modal-icon " + (importBusy ? "is-processing" : "is-listening")}>{importBusy ? <LoaderCircle className="spin" size={26}/> : <Mic size={26}/>}</div>
-          <span className={"voice-status-pill " + (listening ? "active" : "processing")}><span className="voice-status-dot"/>{importBusy ? t("A processar voz…") : listening ? t("Microfone ativo") : t("A preparar microfone…")}</span></div>
-          <h2 id="voice-modal-title">{importBusy ? t("A identificar os produtos") : listening ? t("Podes começar a falar") : t("A preparar microfone…")}</h2>
-          <p>{importBusy ? t("Estamos a identificar os produtos que disseste. Só mais um momento.") : t("Diz vários produtos seguidos. Não precisas de fazer pausas entre cada produto.")}</p>
-          {!importBusy && <div className="voice-example"><span>{t("Por exemplo")}</span><strong>“{t("Leite, pão, seis ovos e dois iogurtes.")}”</strong></div>}
-          {listening && <div className="voice-wave"><span/><span/><span/><span/><span/><span/><span/><span/><span/></div>}
-          {importBusy && <div className="voice-processing-note"><LoaderCircle className="spin" size={16}/>{t("A analisar o que disseste…")}</div>}
-          {listening && <button type="button" className="primary-button voice-stop-button" onClick={() => { recognitionRef.current?.stop(); setListening(false); setVoiceModalOpen(false); }}><X size={17}/>{t("Parar gravação")}</button>}
-        </section>
-      </div>}
       {importPreview.length > 0 && <div className="modal-backdrop" onClick={() => !importBusy && setImportPreview([])}><section className="share-modal import-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="import-title"><button className="modal-close" onClick={() => !importBusy && setImportPreview([])} aria-label={t("Fechar")}><X size={20}/></button><div className="share-graphic"><ShoppingBasket size={28}/></div><h2 id="import-title">{t("Confirmar produtos")}</h2><p>{importSource === "photo" ? "Revê os produtos reconhecidos na fotografia." : "Revê os produtos reconhecidos por voz."} Podes corrigir os nomes e quantidades antes de adicionar.</p><div className="import-preview-list">{importPreview.map((item, index) => <div className="import-preview-row" key={index}><input aria-label={`Produto ${index + 1}`} value={item.name} maxLength={100} onChange={e => editPreviewItem(index, { name: e.target.value })}/><input aria-label={`Quantidade de ${item.name}`} type="number" min="1" max="999" value={item.quantity} onChange={e => editPreviewItem(index, { quantity: e.target.value })}/><button type="button" aria-label={`Remover ${item.name}`} onClick={() => setImportPreview(previous => previous.filter((_, i) => i !== index))}><X size={17}/></button></div>)}</div>{importError && <p className="error-message">{importError}</p>}<button className="primary-button" disabled={importBusy || !importPreview.some(item => item.name.trim())} onClick={confirmImport}>{importBusy ? <LoaderCircle className="spin" size={17}/> : <Check size={17}/>} {importBusy ? "A adicionar…" : `Adicionar ${importPreview.length} ${importPreview.length === 1 ? "produto" : "produtos"}`}</button><button className="secondary-button" disabled={importBusy} onClick={() => setImportPreview([])}>{t("Cancelar")}</button></section></div>}
       {showOnboarding && <div className="modal-backdrop onboarding-backdrop" onClick={() => { setShowOnboarding(false); localStorage.setItem("listora-onboarding-v3-complete", "1"); }}>
         <section className="share-modal onboarding-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
